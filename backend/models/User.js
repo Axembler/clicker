@@ -1,5 +1,20 @@
 const mongoose = require('mongoose')
 
+const userAchievementSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    required: true
+  },
+  unlockedAt: {
+    type: Date,
+    default: Date.now
+  },
+  rewardClaimed: {
+    type: Boolean,
+    default: false
+  }
+})
+
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -42,6 +57,10 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  achievements: {
+    type: [userAchievementSchema],
+    default: []
   }
 }, {
   collection: 'users'
