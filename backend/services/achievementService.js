@@ -78,7 +78,8 @@ const grantAchievements = async (user) => {
     user.achievements.push({
       _id: achievement._id,
       unlockedAt: new Date(),
-      rewardClaimed: true
+      rewardClaimed: true,
+      title: achievement.title
     })
 
     totalReward += achievement.reward?.coins || 0

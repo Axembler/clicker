@@ -8,6 +8,10 @@ const userAchievementSchema = new mongoose.Schema({
   rewardClaimed: {
     type: Boolean,
     default: false
+  },
+  title: {
+    type: String,
+    required: true
   }
 })
 
