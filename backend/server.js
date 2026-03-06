@@ -7,6 +7,7 @@ const counterRoutes = require('./routes/counter')
 const authRoutes = require('./routes/auth')
 const itemsRoutes = require('./routes/items')
 const userRoutes = require('./routes/user')
+const recordsRoutes = require('./routes/records')
 
 const app = express()
 
@@ -23,6 +24,7 @@ app.use('/counter', counterRoutes)
 app.use('/auth', authRoutes)
 app.use('/items', itemsRoutes)
 app.use('/user', userRoutes)
+app.use('/records', recordsRoutes)
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' })

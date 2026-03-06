@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema({
   collection: 'users'
 })
 
+// Индексы для быстрой сортировки по рекордам
+userSchema.index({ clicks: -1 })
+userSchema.index({ totalCoins: -1 })
+
 const User = mongoose.model('User', userSchema)
 
 module.exports = User
