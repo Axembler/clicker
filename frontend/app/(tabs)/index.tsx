@@ -19,6 +19,11 @@ interface ToastState {
   key: number
 }
 
+interface WakeUpParams {
+  passiveEarned: number
+  passiveSeconds: number
+}
+
 export default function HomeScreen() {
   const router = useRouter()
   const [count, setCount] = useState(0)
@@ -72,7 +77,7 @@ export default function HomeScreen() {
     loadCounter()
   }, [])
 
-  const handleWakeUp = useCallback(({ passiveEarned, passiveSeconds }) => {
+  const handleWakeUp = useCallback(({ passiveEarned, passiveSeconds }: WakeUpParams) => {
     if (passiveEarned > 0) {
       setToast(prev => ({
         earned: passiveEarned,
