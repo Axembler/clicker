@@ -25,6 +25,8 @@ export default function TabTwoScreen() {
       await fetchUserItems()
     } catch (error) {
       console.error(error)
+    } finally {
+      setSelectedItem(null)
     }
   }
 

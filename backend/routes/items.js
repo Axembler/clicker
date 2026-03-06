@@ -19,19 +19,16 @@ router.post('/buy/:itemId', auth, async (req, res) => {
   try {
     const { itemId } = req.params
 
-    // Ищем предмет в магазине
     const item = await Item.findById(itemId)
     if (!item) {
       return res.status(404).json({ message: 'Предмет не найден' })
     }
 
-    // Ищем пользователя
     const user = await User.findById(req.user.id)
     if (!user) {
       return res.status(404).json({ message: 'Пользователь не найден' })
     }
 
-    // Проверяем, хватает ли монет
     if (user.coins < item.price) {
       return res.status(400).json({ message: 'Недостаточно монет' })
     }
@@ -42,10 +39,6 @@ router.post('/buy/:itemId', auth, async (req, res) => {
       return res.status(400).json({ message: 'Предмет уже куплен' })
     }
 
-    // Обновляем пользователя:
-    // - списываем монеты
-    // - добавляем бонусы от предмета
-    // - добавляем предмет в инвентарь
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       {

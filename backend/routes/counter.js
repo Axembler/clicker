@@ -21,14 +21,14 @@ router.get('/', auth, async (req, res) => {
 // Увеличить клики и монеты пользователя
 router.post('/increment', auth, async (req, res) => {
   try {
-    // Получение пользователя, чтобы узнать его clickPower
     const user = await User.findByIdAndUpdate(
       req.user.id,
       [
         {
           $set: {
             clicks: { $add: ['$clicks', 1] },
-            coins: { $add: ['$coins', '$clickPower'] } // получение clickPower из самого документа
+            coins: { $add: ['$coins', '$clickPower'] },
+            totalCoins: { $add: ['$totalCoins', '$clickPower'] }
           }
         }
       ],

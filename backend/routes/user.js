@@ -29,8 +29,7 @@ router.get('/items', auth, async (req, res) => {
   }
 })
 
-// POST /api/user/wakeup — вызывается при ВОЗВРАТЕ в приложение
-// Начисляет пассивный доход и обновляет lastOnline
+// Вызывается при ВОЗВРАТЕ в приложение
 router.post('/wakeup', auth, passiveIncome, (req, res) => {
   const user = req.userDoc
   res.json({
@@ -47,8 +46,7 @@ router.post('/wakeup', auth, passiveIncome, (req, res) => {
   })
 })
 
-// POST /api/user/sleep — вызывается когда пользователь УХОДИТ из приложения
-// Фиксирует время ухода
+// Вызывается, когда пользователь УХОДИТ из приложения
 router.post('/sleep', auth, async (req, res) => {
   try {
     const clientSleepAt = req.body?.sleepAt
