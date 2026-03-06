@@ -2,7 +2,7 @@ import { getCounter } from '@/services/counter'
 import { buyItem, getItems, ItemData } from '@/services/items'
 import { getUserItems, UserItems } from '@/services/user'
 import { useFocusEffect } from 'expo-router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 export default function TabTwoScreen() {
@@ -22,6 +22,7 @@ export default function TabTwoScreen() {
       await buyItem(itemId)
 
       await fetchBalance()
+      await fetchUserItems()
     } catch (error) {
       console.error(error)
     }
@@ -29,18 +30,14 @@ export default function TabTwoScreen() {
 
   const isOwned = (product: ItemData) => userItems?.some((item) => item._id === product._id) ?? false
 
-  useEffect(() => {
-    const loadItems = async () => {
-      try {
-        const fetchedItems = await getItems()
+  const fetchItems = useCallback(async () => {
+    try {
+      const fetchedItems = await getItems()
 
-        setItems(fetchedItems)
-      } catch (error) {
-        console.error('Ошибка загрузки предметов:', error)
-      }
+      setItems(fetchedItems)
+    } catch (error) {
+      console.error('Ошибка загрузки предметов:', error)
     }
-
-    loadItems()
   }, [])
 
   const fetchBalance = useCallback(async () => {
@@ -77,7 +74,8 @@ export default function TabTwoScreen() {
     useCallback(() => {
       fetchBalance()
       fetchUserItems()
-    }, [fetchBalance])
+      fetchItems()
+    }, [fetchBalance, fetchUserItems])
   )
 
   return (
