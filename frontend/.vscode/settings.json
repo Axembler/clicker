@@ -1,0 +1,13 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit",
+    "source.sortMembers": "explicit"
+  },
+  "mdb.presetConnections": [
+    {
+      "name": "Preset Connection",
+      "connectionString": "mongodb://localhost:27017"
+    }
+  ]
+}
