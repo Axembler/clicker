@@ -54,7 +54,7 @@ router.get('/user', auth, async (req, res) => {
   const userId = req.user.id
   
   try {
-    const user = await User.findOne({ userId }).lean()
+    const user = await User.findOne(userId).lean()
 
     if (!user) {
       return res.status(404).json({
