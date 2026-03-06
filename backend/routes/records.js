@@ -4,12 +4,7 @@ const router = express.Router()
 const User = require("../models/User")
 const auth = require('../middleware/auth')
 
-/**
- * GET /api/records?sort=clicks&limit=50
- * 
- * sort  — по какому полю сортировать (clicks | totalCoins)
- * limit — сколько записей вернуть (макс. 100)
- */
+// Таблица рекордов
 router.get('/', auth, async (req, res) => {
   try {
     const ALLOWED_SORT_FIELDS = ['clicks', 'totalCoins']
@@ -54,11 +49,7 @@ router.get('/', auth, async (req, res) => {
   }
 })
 
-/**
- * GET /api/records/me?telegramId=123456
- * 
- * Возвращает место конкретного пользователя в таблице
- */
+// Конкретный пользователь в таблице
 router.get('/user', auth, async (req, res) => {
   const userId = req.user.id
   
