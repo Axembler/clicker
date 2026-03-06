@@ -1,9 +1,10 @@
 import { PassiveIncomeToast } from '@/components/passiveIncomeToast'
 import { useLifecycleContext } from '@/context/lifecycle-context'
-import { getCounter, incrementCounter } from '@/services/counter'
+import { useUserContext } from '@/context/user-context'
+import { incrementCounter } from '@/services/counter'
 import { deleteToken } from '@/utils/token'
 import { useRouter } from 'expo-router'
-import { useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Animated,
@@ -13,72 +14,95 @@ import {
   View,
 } from 'react-native'
 
+const LoadingView = memo(() => (
+  <View style={styles.loadingContainer}>
+    <ActivityIndicator size="large" color="#A78BFA" />
+    <Text style={styles.loadingText}>Загрузка...</Text>
+  </View>
+))
+
+const ErrorView = memo(({ message }: { message: string }) => (
+  <View style={styles.loadingContainer}>
+    <Text style={styles.loadingText}>{message}</Text>
+  </View>
+))
+
 export default function HomeScreen() {
   const router = useRouter()
-  const [count, setCount] = useState(0)
-  const [loadingCounter, setLoadingCounter] = useState(true)
   const { toast } = useLifecycleContext()
+  const { user, isLoading, error, setUser } = useUserContext()
+
+  const [count, setCount] = useState(0)
+
+  const activeDots = useMemo(
+    () => (count % 5 === 0 && count > 0 ? 5 : count % 5),
+    [count]
+  )
 
   const scaleAnim = useRef(new Animated.Value(1)).current
 
-  const pulse = () => {
+  const pulse = useCallback(() => {
     Animated.sequence([
       Animated.spring(scaleAnim, { toValue: 0.96, useNativeDriver: true }),
       Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }),
     ]).start()
-  }
+  }, [scaleAnim])
 
-  const loadCounter = async () => {
-    try {
-      const { clicks } = await getCounter()
-
-      setCount(clicks)
-    } catch (error) {
-      console.log('Ошибка загрузки:', error)
-    } finally {
-      setLoadingCounter(false)
-    }
-  }
-
-  const increment = async () => {
+  const increment = useCallback(async () => {
     pulse()
 
     try {
-      const { clicks } = await incrementCounter()
-
+      const { clicks, coins } = await incrementCounter()
+      
       setCount(clicks)
-    } catch (error) {
-      console.log('Ошибка:', error)
-    }
-  }
 
-  const handleLogout = async () => {
+      setUser((prev) => {
+        if (!prev) return null
+        return { ...prev, coins: coins }
+      })
+    } catch (err) {
+      console.error('Ошибка инкремента:', err)
+    }
+  }, [pulse, setUser])
+
+  const handleLogout = useCallback(async () => {
     await deleteToken()
 
     router.replace('/login')
-  }
+  }, [router])
 
   useEffect(() => {
-    loadCounter()
-  }, [])
+    if (user?.clicks) {
+      setCount(user.clicks)
+    }
+  }, [user?.clicks])
 
-  if (loadingCounter) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#A78BFA" />
-        <Text style={styles.loadingText}>Загрузка...</Text>
-      </View>
-    )
-  }
+  if (isLoading) return <LoadingView />
+  if (error) return <ErrorView message={error} />
 
   return (
     <View style={styles.container}>
-      {/* Уведомление о пассивном доходе */}
       <PassiveIncomeToast
         key={toast.key}
         earned={toast.earned}
         seconds={toast.seconds}
       />
+
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statEmoji}>⚡</Text>
+          <Text style={styles.statValue}>{user?.clickPower}</Text>
+          <Text style={styles.statLabel}>за клик</Text>
+        </View>
+
+        <View style={styles.statDivider} />
+
+        <View style={styles.statCard}>
+          <Text style={styles.statEmoji}>💰</Text>
+          <Text style={styles.statValue}>{user?.passiveIncome}</Text>
+          <Text style={styles.statLabel}>в секунду</Text>
+        </View>
+      </View>
 
       <View style={[styles.circle, styles.circleTopLeft]} />
       <View style={[styles.circle, styles.circleBottomRight]} />
@@ -94,26 +118,30 @@ export default function HomeScreen() {
           {[...Array(5)].map((_, i) => (
             <View
               key={i}
-              style={[
-                styles.dot,
-                { opacity: i < (count % 5 === 0 && count > 0 ? 5 : count % 5) ? 1 : 0.2 },
-              ]}
+              style={[styles.dot, { opacity: i < activeDots ? 1 : 0.2 }]}
             />
           ))}
         </View>
       </View>
 
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-        <TouchableOpacity style={styles.button} onPressIn={increment} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.button}
+          onPressIn={increment}
+          activeOpacity={0.85}
+        >
           <Text style={styles.buttonEmoji}>👆</Text>
           <Text style={styles.buttonText}>Нажми меня</Text>
         </TouchableOpacity>
       </Animated.View>
 
-      <TouchableOpacity style={styles.logoutButton} onPressIn={handleLogout} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPressIn={handleLogout}
+        activeOpacity={0.7}
+      >
         <Text style={styles.logoutText}>Выйти</Text>
       </TouchableOpacity>
-
     </View>
   )
 }
@@ -129,6 +157,47 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#A78BFA',
     fontSize: 16,
+  },
+
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    marginBottom: 32,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    gap: 24,
+  },
+  statCard: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  statEmoji: {
+    fontSize: 22,
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#5B21B6',
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#C4B5FD',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontWeight: '600',
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: '#EDE9FE',
   },
 
   container: {

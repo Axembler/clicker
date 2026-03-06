@@ -1,17 +1,16 @@
-import { getCounter } from '@/services/counter'
+import { useUserContext } from '@/context/user-context'
 import { buyItem, getItems, ItemData } from '@/services/items'
-import { getUserItems, UserItems } from '@/services/user'
+import { UserItems } from '@/services/user'
 import { useFocusEffect } from 'expo-router'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 export default function TabTwoScreen() {
   const [coins, setCoins] = useState<number | null>(null)
   const [items, setItems] = useState<ItemData[] | null>(null)
   const [userItems, setUserItems] = useState<UserItems | null>(null)
-  const [loadingBalance, setLoadingBalance] = useState(true)
-  const [loadingUserItems, setLoadingUserItems] = useState(true)
   const [selectedItem, setSelectedItem] = useState<ItemData | null>(null)
+  const { refetchUser, isLoading, user } = useUserContext()
 
   const handlePress = (item: ItemData) => {
     setSelectedItem(item)
@@ -21,8 +20,7 @@ export default function TabTwoScreen() {
     try {
       await buyItem(itemId)
 
-      await fetchBalance()
-      await fetchUserItems()
+      await refetchUser()
     } catch (error) {
       console.error(error)
     } finally {
@@ -31,6 +29,13 @@ export default function TabTwoScreen() {
   }
 
   const isOwned = (product: ItemData) => userItems?.some((item) => item._id === product._id) ?? false
+
+  useEffect(() => {
+    if (user) {
+      setCoins(user.coins)
+      setUserItems(user.items)
+    }
+  }, [user])
 
   const fetchItems = useCallback(async () => {
     try {
@@ -42,42 +47,10 @@ export default function TabTwoScreen() {
     }
   }, [])
 
-  const fetchBalance = useCallback(async () => {
-    setLoadingBalance(true)
-
-    try {
-      const { coins } = await getCounter()
-      
-      setCoins(coins)
-    } catch (error) {
-      console.error('Ошибка загрузки баланса:', error)
-      setCoins(null)
-    } finally {
-      setLoadingBalance(false)
-    }
-  }, [])
-
-  const fetchUserItems = useCallback(async () => {
-    setLoadingUserItems(true)
-
-    try {
-      const response = await getUserItems()
-
-      setUserItems(response)
-    } catch (error) {
-      console.error('Ошибка загрузки предметов пользователя:', error)
-      setUserItems(null)
-    } finally {
-      setLoadingUserItems(false)
-    }
-  }, [])
-
   useFocusEffect(
     useCallback(() => {
-      fetchBalance()
-      fetchUserItems()
       fetchItems()
-    }, [fetchBalance, fetchUserItems])
+    }, [])
   )
 
   return (
@@ -94,7 +67,7 @@ export default function TabTwoScreen() {
           {/* Баланс */}
           <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Баланс</Text>
-            {loadingBalance ? (
+            {isLoading ? (
               <Text style={styles.balanceLoading}>...</Text>
             ) : coins !== null ? (
               <Text style={styles.balanceAmount}>🪙 {coins}</Text>
@@ -110,7 +83,7 @@ export default function TabTwoScreen() {
         contentContainerStyle={styles.grid}
         showsVerticalScrollIndicator={false}
       >
-        {!loadingUserItems && items?.map((product) => {
+        {!isLoading && items?.map((product) => {
           const owned = isOwned(product)
 
           return (

@@ -1,6 +1,7 @@
 // context/lifecycle-context.tsx
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import { useAppLifecycle } from '@/hooks/use-app-lifecycle'
+import { useUserContext } from './user-context'
 
 interface ToastState {
   earned: number
@@ -19,6 +20,8 @@ const LifecycleContext = createContext<LifecycleContextType>({
 export const useLifecycleContext = () => useContext(LifecycleContext)
 
 export function LifecycleProvider({ children }: { children: ReactNode }) {
+  const { setUser } = useUserContext()
+
   const [toast, setToast] = useState<ToastState>({
     earned: 0,
     seconds: 0,
@@ -35,6 +38,11 @@ export function LifecycleProvider({ children }: { children: ReactNode }) {
         seconds: passiveSeconds,
         key: prev.key + 1
       }))
+
+      setUser((prev) => {
+        if (!prev) return null
+        return { ...prev, coins: prev.coins + passiveEarned }
+      })
     }
   }, [])
 
