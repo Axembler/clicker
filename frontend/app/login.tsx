@@ -1,3 +1,4 @@
+import { useAuth } from '@/context/auth-context'
 import { authService } from '@/services/auth'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
@@ -13,12 +14,14 @@ import {
 
 export default function LoginScreen() {
   const router = useRouter()
+  const { signIn } = useAuth()
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleLogin = async () => {
+
     if (!username || !password) {
       Alert.alert('Ошибка', 'Заполни все поля')
       
@@ -28,9 +31,11 @@ export default function LoginScreen() {
     setLoading(true)
     
     try {
-      await authService.login({ username, password })
+      const { token } = await authService.login({ username, password })
 
-      router.replace('/')
+      await signIn(token)
+
+      router.replace('/(tabs)')
     } catch (error) {
       Alert.alert('Ошибка', 'Не удалось подключиться к серверу')
     } finally {

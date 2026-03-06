@@ -1,3 +1,4 @@
+import { useAuth } from '@/context/auth-context'
 import { authService } from '@/services/auth'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
@@ -13,6 +14,7 @@ import {
 
 export default function RegisterScreen() {
   const router = useRouter()
+  const { signIn } = useAuth()
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -32,9 +34,11 @@ export default function RegisterScreen() {
     setLoading(true)
 
     try {
-      await authService.register({ username, password })
-      
-      router.replace('/')
+      const { token } = await authService.register({ username, password })
+
+      await signIn(token)
+
+      router.replace('/(tabs)')
     } catch (error) {
       Alert.alert('Ошибка', 'Не удалось подключиться к серверу')
     } finally {

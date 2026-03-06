@@ -1,10 +1,9 @@
 import { PassiveIncomeToast } from '@/components/passiveIncomeToast'
+import { useAuth } from '@/context/auth-context'
 import { useLifecycleContext } from '@/context/lifecycle-context'
 import { useUserContext } from '@/context/user-context'
 import { useClickBatcher } from '@/hooks/use-click-batcher'
 import { incrementCounter } from '@/services/counter'
-import { deleteToken } from '@/utils/token'
-import { useRouter } from 'expo-router'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
@@ -29,9 +28,9 @@ const ErrorView = memo(({ message }: { message: string }) => (
 ))
 
 export default function HomeScreen() {
-  const router = useRouter()
   const { toast } = useLifecycleContext()
   const { user, isLoading, error, setUser } = useUserContext()
+  const { signOut } = useAuth()
 
   const [count, setCount] = useState(0)
 
@@ -48,6 +47,10 @@ export default function HomeScreen() {
       Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }),
     ]).start()
   }, [scaleAnim])
+
+  const handleSignOut = async () => {
+    await signOut()
+  }
 
   const { registerClick } = useClickBatcher(async (clicks: number) => {
     const { coins } = await incrementCounter(clicks)
@@ -66,12 +69,6 @@ export default function HomeScreen() {
 
     registerClick()
   }, [pulse, registerClick])
-
-  const handleLogout = useCallback(async () => {
-    await deleteToken()
-
-    router.replace('/login')
-  }, [router])
 
   useEffect(() => {
     if (user?.clicks) {
@@ -139,7 +136,7 @@ export default function HomeScreen() {
 
       <TouchableOpacity
         style={styles.logoutButton}
-        onPressIn={handleLogout}
+        onPressIn={handleSignOut}
         activeOpacity={0.7}
       >
         <Text style={styles.logoutText}>Выйти</Text>

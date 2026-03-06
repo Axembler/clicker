@@ -1,4 +1,3 @@
-// context/lifecycle-context.tsx
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import { useAppLifecycle } from '@/hooks/use-app-lifecycle'
 import { useUserContext } from './user-context'

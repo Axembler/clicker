@@ -1,5 +1,4 @@
 import { apiClient } from '@/utils/apiClient'
-import { saveToken } from '@/utils/token'
 
 export interface AuthCredentials {
   username: string
@@ -27,8 +26,6 @@ export const authService = {
       throw new Error('Ошибка авторизации')
     }
 
-    await saveToken(data.token)
-
     return data
   },
 
@@ -45,8 +42,6 @@ export const authService = {
     if (!response.ok) {
       throw new Error('Ошибка регистрации')
     }
-
-    await saveToken(data.token)
 
     return data
   }
