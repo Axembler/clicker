@@ -1,11 +1,9 @@
-import { PassiveIncomeToast } from '@/components/passiveIncomeToast'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/context/auth-context'
-import { useLifecycleContext } from '@/context/lifecycle-context'
 import { useUserContext } from '@/context/user-context'
 import { formatNumber } from '@/helpers/formatNumber'
 import { useClickBatcher } from '@/hooks/use-click-batcher'
 import { incrementCounter } from '@/services/counter'
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -15,6 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { SignOutModal } from '@/components/SignOutModal'
+import { useModal } from '@/context/modal-context'
 
 const LoadingView = memo(() => (
   <View style={styles.loadingContainer}>
@@ -30,9 +30,9 @@ const ErrorView = memo(({ message }: { message: string }) => (
 ))
 
 export default function HomeScreen() {
-  const { toast } = useLifecycleContext()
   const { user, isLoading, error, setUser } = useUserContext()
   const { signOut } = useAuth()
+  const { showModal, hideModal } = useModal()
 
   const [count, setCount] = useState(0)
 
@@ -50,14 +50,15 @@ export default function HomeScreen() {
     ]).start()
   }, [scaleAnim])
 
-  const handleSignOut = async () => {
-    Alert.alert(
-      'Выход',
-      'Ты точно хочешь выйти?',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        { text: 'Выйти', style: 'destructive', onPress: () => signOut() },
-      ]
+  const handleSignOut = () => {
+    showModal(
+      <SignOutModal
+        onCancel={hideModal}
+        onConfirm={() => {
+          hideModal()
+          signOut()
+        }}
+      />
     )
   }
 
@@ -90,12 +91,6 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <PassiveIncomeToast
-        key={toast.key}
-        earned={toast.earned}
-        seconds={toast.seconds}
-      />
-
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={handleSignOut}
@@ -183,7 +178,7 @@ const styles = StyleSheet.create({
 
   logoutButton: {
     position: 'absolute',
-    top: 40,
+    top: 36,
     right: 16,
     width: 36,
     height: 36,

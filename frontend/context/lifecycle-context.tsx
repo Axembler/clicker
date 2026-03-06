@@ -1,42 +1,23 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useCallback, ReactNode } from 'react'
 import { useAppLifecycle } from '@/hooks/use-app-lifecycle'
 import { useUserContext } from './user-context'
+import { useModal } from './modal-context'
+import { PassiveIncomeModal } from '@/components/PassiveIncomeModal'
 
-interface ToastState {
-  earned: number
-  seconds: number
-  key: number
-}
-
-interface LifecycleContextType {
-  toast: ToastState
-}
-
-const LifecycleContext = createContext<LifecycleContextType>({
-  toast: { earned: 0, seconds: 0, key: 0 }
-})
+const LifecycleContext = createContext({})
 
 export const useLifecycleContext = () => useContext(LifecycleContext)
 
 export function LifecycleProvider({ children }: { children: ReactNode }) {
   const { setUser } = useUserContext()
-
-  const [toast, setToast] = useState<ToastState>({
-    earned: 0,
-    seconds: 0,
-    key: 0
-  })
+  const { showModal } = useModal()
 
   const handleWakeUp = useCallback(({ passiveEarned, passiveSeconds }: {
     passiveEarned: number
     passiveSeconds: number
   }) => {
     if (passiveEarned > 0) {
-      setToast(prev => ({
-        earned: passiveEarned,
-        seconds: passiveSeconds,
-        key: prev.key + 1
-      }))
+      showModal(<PassiveIncomeModal earned={passiveEarned} seconds={passiveSeconds} />)
 
       setUser((prev) => {
         if (!prev) return null
@@ -48,7 +29,7 @@ export function LifecycleProvider({ children }: { children: ReactNode }) {
   useAppLifecycle({ onWakeUp: handleWakeUp })
 
   return (
-    <LifecycleContext.Provider value={{ toast }}>
+    <LifecycleContext.Provider value={{}}>
       {children}
     </LifecycleContext.Provider>
   )

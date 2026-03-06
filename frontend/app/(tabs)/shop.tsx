@@ -1,34 +1,50 @@
+import { useCallback, useEffect, useState } from 'react'
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { useFocusEffect } from 'expo-router'
+import { BuyItemModal } from '@/components/BuyItemModal'
+import { useModal } from '@/context/modal-context'
 import { useUserContext } from '@/context/user-context'
 import { buyItem, getItems, ItemData } from '@/services/items'
 import { UserItems } from '@/services/user'
-import { useFocusEffect } from 'expo-router'
-import { useCallback, useEffect, useState } from 'react'
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
-export default function TabTwoScreen() {
+export default function Shop() {
   const [coins, setCoins] = useState<number | null>(null)
   const [items, setItems] = useState<ItemData[] | null>(null)
   const [userItems, setUserItems] = useState<UserItems | null>(null)
-  const [selectedItem, setSelectedItem] = useState<ItemData | null>(null)
   const { refetchUser, isLoading, user } = useUserContext()
+  const { showModal, hideModal } = useModal()
 
-  const handlePress = (item: ItemData) => {
-    setSelectedItem(item)
-  }
+  const isOwned = (ownedItem: ItemData) => userItems?.some((item) => item._id === ownedItem._id) ?? false
 
-  const handleBuy = async (itemId: string | undefined) => {
+  const handleBuy = async (item: ItemData) => {
+    const owned = isOwned(item)
+
+    if (owned) return
+
     try {
-      await buyItem(itemId)
+      await buyItem(item._id)
 
       await refetchUser()
+
+      hideModal()
     } catch (error) {
       console.error(error)
-    } finally {
-      setSelectedItem(null)
     }
   }
 
-  const isOwned = (product: ItemData) => userItems?.some((item) => item._id === product._id) ?? false
+
+  const openBuyModal = (item: ItemData) => {
+    const owned = isOwned(item)
+
+    showModal(
+      <BuyItemModal
+        item={item}
+        onConfirm={() => handleBuy(item)}
+        owned={owned}
+        onCancel={hideModal}
+      />
+    )
+  }
 
   useEffect(() => {
     if (user) {
@@ -55,6 +71,8 @@ export default function TabTwoScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={[styles.circle, styles.circleTopLeft]} />
+      <View style={[styles.circle, styles.circleBottomRight]} />
 
       {/* Шапка */}
       <View style={styles.header}>
@@ -83,44 +101,37 @@ export default function TabTwoScreen() {
         contentContainerStyle={styles.grid}
         showsVerticalScrollIndicator={false}
       >
-        {!isLoading && items?.map((product) => {
-          const owned = isOwned(product)
+        {!isLoading && items?.map((item) => {
+          const owned = isOwned(item)
 
           return (
             <TouchableOpacity
-              key={product._id}
-              style={[styles.card, owned && styles.cardDisabled]}
-              onPress={() => !owned && handlePress(product)}
+              key={item._id}
+              style={styles.card}
               activeOpacity={owned ? 1 : 0.8}
-              // Полностью блокирует все touch-события
-              disabled={owned}
+              onPress={() => openBuyModal(item)}
             >
-              {/* Изображение */}
-              <View style={[styles.imagePlaceholder, { backgroundColor: product.color }]}>
-                {/* Оверлей поверх картинки */}
+              <View style={[styles.imagePlaceholder, { backgroundColor: item.color }]}>
                 {owned && <View style={styles.ownedOverlay} />}
               </View>
 
-              {/* Информация */}
               <View style={styles.cardBody}>
-                <Text style={[styles.productName, owned && styles.textDisabled]} numberOfLines={2}>
-                  {product.name}
+                <Text style={[styles.itemName, owned && styles.textDisabled]} numberOfLines={2}>
+                  {item.name}
                 </Text>
                 <View style={styles.cardFooter}>
                   <Text style={[styles.price, owned && styles.textDisabled]}>
-                    🪙 {product.price}
+                    🪙 {item.price}
                   </Text>
+
                   {owned ? (
                     <View style={[styles.addButton, styles.addButtonDisabled]}>
                       <Text style={styles.addButtonText}>✓</Text>
                     </View>
                   ) : (
-                    <TouchableOpacity
-                      style={styles.addButton}
-                      onPress={() => handlePress(product)}
-                    >
+                    <View style={styles.addButton}>
                       <Text style={styles.addButtonText}>+</Text>
-                    </TouchableOpacity>
+                    </View>
                   )}
                 </View>
               </View>
@@ -128,55 +139,6 @@ export default function TabTwoScreen() {
           )
         })}
       </ScrollView>
-
-      {/* Модальное окно */}
-      <Modal
-        visible={!!selectedItem}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSelectedItem(null)}
-      >
-        {/* Затемненный фон — закрывает модалку по тапу */}
-        <Pressable style={styles.overlay} onPress={() => setSelectedItem(null)}>
-          {/* Сама карточка — тап внутри не закрывает */}
-          <Pressable style={styles.modal} onPress={(e) => e.stopPropagation()}>
-
-            {/* Цветная шапка */}
-            <View
-              style={[
-                styles.modalHeader,
-                { backgroundColor: selectedItem?.color ?? '#ccc' },
-              ]}
-            />
-
-            {/* Контент */}
-            <View style={styles.modalBody}>
-              <Text style={styles.modalTitle}>{selectedItem?.name}</Text>
-
-              <Text style={styles.modalDescription}>
-                {selectedItem?.description ?? 'Описание отсутствует.'}
-              </Text>
-
-              <View style={styles.modalFooter}>
-                <Text style={styles.modalPrice}>🪙 {selectedItem?.price}</Text>
-
-                <TouchableOpacity style={styles.buyButton} onPress={() => handleBuy(selectedItem?._id)}>
-                  <Text style={styles.buyButtonText}>Купить</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Кнопка закрытия */}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setSelectedItem(null)}
-            >
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
   )
 }
@@ -184,7 +146,30 @@ export default function TabTwoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    backgroundColor: '#FAF8FF',
+    paddingHorizontal: 12,
+    paddingTop: 24,
+  },
+
+  circle: {
+    position: 'absolute',
+    borderRadius: 999,
+    opacity: 0.15,
+  },
+  circleTopLeft: {
+    width: 280,
+    height: 280,
+    backgroundColor: '#C4B5FD',
+    top: -80,
+    left: -80,
+  },
+  circleBottomRight: {
+    width: 220,
+    height: 220,
+    backgroundColor: '#FBCFE8',
+    bottom: -60,
+    right: -60,
   },
 
   // Шапка
@@ -192,11 +177,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#EFEFEF',
   },
   headerTop: {
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -287,7 +272,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 4,
   },
-  productName: {
+  itemName: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1A1A1A',
@@ -330,79 +315,5 @@ const styles = StyleSheet.create({
   },
   addButtonDisabled: {
     backgroundColor: '#A0A0A0',
-  },
-  // Модалка
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  modal: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  modalHeader: {
-    height: 120,
-  },
-  modalBody: {
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 10,
-  },
-  modalDescription: {
-    fontSize: 14,
-    color: '#555',
-    lineHeight: 22,
-    marginBottom: 20,
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  modalPrice: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#2D7BF5',
-  },
-  buyButton: {
-    backgroundColor: '#2D7BF5',
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  buyButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 10,
-    right: 12,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
   }
 })

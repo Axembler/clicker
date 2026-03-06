@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#4C1D95',
     marginBottom: 6,
-    marginTop: 12,
+    marginTop: 18,
     letterSpacing: 0.5,
   },
   subtitle: {
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
-    gap: 20,
+    gap: 16,
   },
   statCard: {
     alignItems: 'center',
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   statValue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
     color: '#5B21B6',
   },
