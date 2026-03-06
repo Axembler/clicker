@@ -1,9 +1,9 @@
 import { PassiveIncomeToast } from '@/components/passiveIncomeToast'
-import { useAppLifecycle } from '@/hooks/use-app-lifecycle'
+import { useLifecycleContext } from '@/context/lifecycle-context'
 import { getCounter, incrementCounter } from '@/services/counter'
 import { deleteToken } from '@/utils/token'
 import { useRouter } from 'expo-router'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Animated,
@@ -13,26 +13,11 @@ import {
   View,
 } from 'react-native'
 
-interface ToastState {
-  earned: number
-  seconds: number
-  key: number
-}
-
-interface WakeUpParams {
-  passiveEarned: number
-  passiveSeconds: number
-}
-
 export default function HomeScreen() {
   const router = useRouter()
   const [count, setCount] = useState(0)
   const [loadingCounter, setLoadingCounter] = useState(true)
-  const [toast, setToast] = useState<ToastState>({
-    earned: 0,
-    seconds: 0,
-    key: 0
-  })
+  const { toast } = useLifecycleContext()
 
   const scaleAnim = useRef(new Animated.Value(1)).current
 
@@ -76,18 +61,6 @@ export default function HomeScreen() {
   useEffect(() => {
     loadCounter()
   }, [])
-
-  const handleWakeUp = useCallback(({ passiveEarned, passiveSeconds }: WakeUpParams) => {
-    if (passiveEarned > 0) {
-      setToast(prev => ({
-        earned: passiveEarned,
-        seconds: passiveSeconds,
-        key: prev.key + 1
-      }))
-    }
-  }, [])
-
-  useAppLifecycle({ onWakeUp: handleWakeUp })
 
   if (loadingCounter) {
     return (
