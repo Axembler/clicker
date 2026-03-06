@@ -2,11 +2,13 @@ import { PassiveIncomeToast } from '@/components/passiveIncomeToast'
 import { useAuth } from '@/context/auth-context'
 import { useLifecycleContext } from '@/context/lifecycle-context'
 import { useUserContext } from '@/context/user-context'
+import { formatNumber } from '@/helpers/formatNumber'
 import { useClickBatcher } from '@/hooks/use-click-batcher'
 import { incrementCounter } from '@/services/counter'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   StyleSheet,
   Text,
@@ -49,7 +51,14 @@ export default function HomeScreen() {
   }, [scaleAnim])
 
   const handleSignOut = async () => {
-    await signOut()
+    Alert.alert(
+      'Выход',
+      'Ты точно хочешь выйти?',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        { text: 'Выйти', style: 'destructive', onPress: () => signOut() },
+      ]
+    )
   }
 
   const { registerClick } = useClickBatcher(async (clicks: number) => {
@@ -87,6 +96,14 @@ export default function HomeScreen() {
         seconds={toast.seconds}
       />
 
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={handleSignOut}
+        activeOpacity={0.6}
+      >
+        <Text style={styles.logoutText}>⚙️</Text>
+      </TouchableOpacity>
+
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <Text style={styles.statEmoji}>⚡</Text>
@@ -100,6 +117,14 @@ export default function HomeScreen() {
           <Text style={styles.statEmoji}>💰</Text>
           <Text style={styles.statValue}>{user?.passiveIncome}</Text>
           <Text style={styles.statLabel}>в секунду</Text>
+        </View>
+
+        <View style={styles.statDivider} />
+
+        <View style={styles.statCard}>
+          <Text style={styles.statEmoji}>💰</Text>
+          <Text style={styles.statValue}>{formatNumber(user?.coins)}</Text>
+          <Text style={styles.statLabel}>всего</Text>
         </View>
       </View>
 
@@ -138,9 +163,7 @@ export default function HomeScreen() {
         style={styles.logoutButton}
         onPressIn={handleSignOut}
         activeOpacity={0.7}
-      >
-        <Text style={styles.logoutText}>Выйти</Text>
-      </TouchableOpacity>
+      />
     </View>
   )
 }
@@ -156,6 +179,22 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#A78BFA',
     fontSize: 16,
+  },
+
+  logoutButton: {
+    position: 'absolute',
+    top: 40,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EDE9FE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.6,
+  },
+  logoutText: {
+    fontSize: 18,
   },
 
   statsRow: {
@@ -182,7 +221,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   statValue: {
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: '800',
     color: '#5B21B6',
   },
@@ -302,17 +341,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '700',
-  },
-
-  logoutButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-  },
-  logoutText: {
-    color: '#C4B5FD',
-    fontSize: 15,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-    textDecorationColor: '#C4B5FD',
-  },
+  }
 })

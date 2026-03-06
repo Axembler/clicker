@@ -1,3 +1,4 @@
+import { formatNumber } from '@/helpers/formatNumber'
 import { useRecords } from '@/hooks/use-records'
 import React from 'react'
 import {
@@ -27,13 +28,6 @@ type MyRank = {
 }
 
 const MEDALS: Record<number, string> = { 0: '🥇', 1: '🥈', 2: '🥉' }
-
-const formatNumber = (n: number): string =>
-  n >= 1_000_000
-    ? `${(n / 1_000_000).toFixed(1)}M`
-    : n >= 1_000
-    ? `${(n / 1_000).toFixed(1)}K`
-    : String(n)
 
 const TableHeader = () => {
   return (
