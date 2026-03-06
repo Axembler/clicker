@@ -1,10 +1,6 @@
 const mongoose = require('mongoose')
 
 const userAchievementSchema = new mongoose.Schema({
-  _id: {
-    type: String,
-    required: true
-  },
   unlockedAt: {
     type: Date,
     default: Date.now
