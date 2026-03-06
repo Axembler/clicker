@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "expo-test",
-    "slug": "expo-test",
+    "name": "drugs",
+    "slug": "drugs",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "expotest",
+    "scheme": "drugs",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
