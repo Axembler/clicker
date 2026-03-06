@@ -8,6 +8,11 @@ type OnSyncFn = (clicks: number) => Promise<void>
 export function useClickBatcher(onSync: OnSyncFn) {
   const pendingClicks = useRef<number>(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onSyncRef = useRef<OnSyncFn>(onSync)
+
+  useEffect(() => {
+    onSyncRef.current = onSync
+  })
 
   const flush = useCallback(async () => {
     if (pendingClicks.current === 0) return
@@ -16,12 +21,12 @@ export function useClickBatcher(onSync: OnSyncFn) {
     pendingClicks.current = 0
 
     try {
-      await onSync(clicksToSend)
+      await onSyncRef.current(clicksToSend)
     } catch (error) {
       pendingClicks.current += clicksToSend
       console.error('Sync failed:', error)
     }
-  }, [onSync])
+  }, [])
 
   const registerClick = useCallback(() => {
     pendingClicks.current += 1

@@ -54,6 +54,7 @@ export default function HomeScreen() {
 
     setUser((prev) => {
       if (!prev) return null
+      
       return { ...prev, coins: coins }
     })
   })
@@ -64,7 +65,7 @@ export default function HomeScreen() {
     setCount(prev => prev + 1)
 
     registerClick()
-  }, [pulse, setUser])
+  }, [pulse, registerClick])
 
   const handleLogout = useCallback(async () => {
     await deleteToken()
