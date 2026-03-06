@@ -6,21 +6,28 @@ const auth = require('../middleware/auth')
 // Увеличить клики и монеты пользователя
 router.post('/increment', auth, async (req, res) => {
   try {
+    const { increment = 1 } = req.body
+
+    // Защита от некорректных значений
+    if (!Number.isInteger(increment) || increment < 1 || increment > 1000) {
+      return res.status(400).json({ message: 'Некорректное значение increment' })
+    }
+
     const user = await User.findByIdAndUpdate(
       req.user.id,
       [
         {
           $set: {
-            clicks: { $add: ['$clicks', 1] },
-            coins: { $add: ['$coins', '$clickPower'] },
-            totalCoins: { $add: ['$totalCoins', '$clickPower'] }
+            clicks: { $add: ['$clicks', increment] },
+            coins: { $add: ['$coins', { $multiply: ['$clickPower', increment] }] },
+            totalCoins: { $add: ['$totalCoins', { $multiply: ['$clickPower', increment] }] }
           }
         }
       ],
       {
         returnDocument: 'after',
         updatePipeline: true
-      } // вернуть обновлённый документ
+      }
     )
 
     if (!user) {

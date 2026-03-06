@@ -5,9 +5,11 @@ interface CounterData {
   coins: number
 }
 
-export const incrementCounter = async (): Promise<CounterData> => {
+export const incrementCounter = async (clicks: number): Promise<CounterData> => {
   const response = await apiClient('/counter/increment', {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ increment: clicks })
   })
 
   if (!response.ok) {

@@ -1,6 +1,7 @@
 import { PassiveIncomeToast } from '@/components/passiveIncomeToast'
 import { useLifecycleContext } from '@/context/lifecycle-context'
 import { useUserContext } from '@/context/user-context'
+import { useClickBatcher } from '@/hooks/use-click-batcher'
 import { incrementCounter } from '@/services/counter'
 import { deleteToken } from '@/utils/token'
 import { useRouter } from 'expo-router'
@@ -48,21 +49,21 @@ export default function HomeScreen() {
     ]).start()
   }, [scaleAnim])
 
+  const { registerClick } = useClickBatcher(async (clicks: number) => {
+    const { coins } = await incrementCounter(clicks)
+
+    setUser((prev) => {
+      if (!prev) return null
+      return { ...prev, coins: coins }
+    })
+  })
+
   const increment = useCallback(async () => {
     pulse()
 
-    try {
-      const { clicks, coins } = await incrementCounter()
-      
-      setCount(clicks)
+    setCount(prev => prev + 1)
 
-      setUser((prev) => {
-        if (!prev) return null
-        return { ...prev, coins: coins }
-      })
-    } catch (err) {
-      console.error('Ошибка инкремента:', err)
-    }
+    registerClick()
   }, [pulse, setUser])
 
   const handleLogout = useCallback(async () => {
