@@ -1,15 +1,10 @@
 import * as SecureStore from 'expo-secure-store'
-import { Platform } from 'react-native'
 
 const TOKEN_KEY = 'auth_token'
 const API_URL = process.env.EXPO_PUBLIC_API_URL
 
 export const getToken = async (): Promise<string | null> => {
-  if (Platform.OS === 'web') {
-    return localStorage.getItem(TOKEN_KEY)
-  } else {
-    return await SecureStore.getItemAsync(TOKEN_KEY)
-  }
+  return await SecureStore.getItemAsync(TOKEN_KEY)
 }
 
 export const apiClient = async (
@@ -18,9 +13,9 @@ export const apiClient = async (
 ): Promise<Response> => {
   const token = await getToken()
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   }
 
   if (token) {
