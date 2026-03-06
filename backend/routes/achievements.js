@@ -29,7 +29,6 @@ router.get('/', auth, async (req, res) => {
       ...achievement,
       unlocked: unlockedMap.has(achievement._id),
       unlockedAt: unlockedMap.get(achievement._id)?.unlockedAt || null,
-      rewardClaimed: unlockedMap.get(achievement._id)?.rewardClaimed || false,
       title: unlockedMap.get(achievement._id)?.title || null
     }))
 

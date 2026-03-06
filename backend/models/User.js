@@ -5,10 +5,6 @@ const userAchievementSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  rewardClaimed: {
-    type: Boolean,
-    default: false
-  },
   title: {
     type: String,
     required: true
