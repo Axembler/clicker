@@ -41,13 +41,13 @@ const checkAchievements = async (user) => {
     const allAchievements = await Achievement.find({})
 
     // Ключи уже полученных достижений пользователя
-    const unlockedAchievements = new Set(user.achievements.map(a => a._id))
+    const unlockedAchievements = new Set(user.achievements.map(a => a._id.toString()))
 
     const newlyUnlocked = []
 
     for (const achievement of allAchievements) {
       // Пропускаем уже полученные
-      if (unlockedAchievements.has(achievement._id)) continue
+      if (unlockedAchievements.has(achievement._id.toString())) continue
 
       // Проверяем условие
       if (checkCondition(user, achievement.condition)) {

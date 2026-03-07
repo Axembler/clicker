@@ -26,7 +26,7 @@ router.get('/', auth, async (req, res) => {
 
     const achievementsWithStatus = allAchievements.map(achievement => {
       const id = achievement._id.toString()
-      
+
       return {
         ...achievement,
         unlocked: unlockedMap.has(id),
@@ -68,7 +68,6 @@ router.post('/check', auth, async (req, res) => {
         _id: a._id,
         title: a.title,
         description: a.description,
-        icon: a.icon,
         reward: a.reward
       })),
       hasNew: newAchievements.length > 0

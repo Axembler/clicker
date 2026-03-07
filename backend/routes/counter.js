@@ -2,7 +2,6 @@ const express = require('express')
 const router = express.Router()
 const User = require('../models/User')
 const auth = require('../middleware/auth')
-const { grantAchievements } = require('../services/achievementService')
 
 // Увеличить клики и монеты пользователя
 router.post('/increment', auth, async (req, res) => {
@@ -35,9 +34,7 @@ router.post('/increment', auth, async (req, res) => {
       return res.status(404).json({ message: 'Пользователь не найден' })
     }
 
-    const newAchievements = await grantAchievements(user)
-
-    res.json({ clicks: user.clicks, coins: user.coins, newAchievements })
+    res.json({ clicks: user.clicks, coins: user.coins })
   } catch (error) {
     res.status(500).json({ message: 'Ошибка сервера', error: error.message })
   }
