@@ -6,6 +6,8 @@ import { useModal } from '@/context/modal-context'
 import { useUserContext } from '@/context/user-context'
 import { buyItem, getItems, ItemData } from '@/services/items'
 import { UserItems } from '@/services/user'
+import { checkAchievements } from '@/services/achievements'
+import { useAchievementQueue } from '@/hooks/use-achievement-queue'
 
 export default function Shop() {
   const [coins, setCoins] = useState<number | null>(null)
@@ -13,16 +15,24 @@ export default function Shop() {
   const [userItems, setUserItems] = useState<UserItems | null>(null)
   const { refetchUser, isLoading, user } = useUserContext()
   const { showModal, hideModal } = useModal()
+  const { enqueue } = useAchievementQueue()
 
   const isOwned = (ownedItem: ItemData) => userItems?.some((item) => item._id === ownedItem._id) ?? false
 
   const handleBuy = async (item: ItemData) => {
     const owned = isOwned(item)
+    const isNotEnoughtCoins = coins && coins < item.price
 
-    if (owned) return
+    if (owned || isNotEnoughtCoins) return
 
     try {
       await buyItem(item._id)
+
+      const { newAchievements } = await checkAchievements()
+      
+      if (newAchievements.length > 0) {
+        enqueue(newAchievements)
+      }
 
       await refetchUser()
 
@@ -32,15 +42,16 @@ export default function Shop() {
     }
   }
 
-
   const openBuyModal = (item: ItemData) => {
     const owned = isOwned(item)
+    const isNotEnoughtCoins = coins && coins < item.price
 
     showModal(
       <BuyItemModal
         item={item}
         onConfirm={() => handleBuy(item)}
         owned={owned}
+        isNotEnoughtCoins={isNotEnoughtCoins || true}
         onCancel={hideModal}
       />
     )

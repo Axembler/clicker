@@ -143,8 +143,10 @@ export default function RecordsScreen() {
       <View style={[styles.circle, styles.circleTopLeft]} />
       <View style={[styles.circle, styles.circleBottomRight]} />
 
-      <Text style={styles.title}>🏆 Рекорды</Text>
-      <Text style={styles.subtitle}>Лучшие игроки</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>🏆 Рекорды</Text>
+        <Text style={styles.subtitle}>Лучшие игроки</Text>
+      </View>
 
       {error && <ErrorBanner message={error} onRetry={refresh} />}
 
@@ -231,6 +233,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF8FF',
     paddingHorizontal: 24,
     paddingTop: 24,
+  },
+  
+  header: {
+    width: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 60,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFEFEF',
   },
 
   circle: {

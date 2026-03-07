@@ -1,5 +1,7 @@
 import { useModal } from '@/context/modal-context'
 import { formatSeconds } from '@/helpers/formatSeconds'
+import { useAchievementQueue } from '@/hooks/use-achievement-queue'
+import { checkAchievements } from '@/services/achievements'
 import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 
@@ -10,6 +12,17 @@ interface Props {
 
 export const PassiveIncomeModal = ({ earned, seconds }: Props) => {
   const { hideModal } = useModal()
+  const { enqueue } = useAchievementQueue()
+
+  const hideModalHandler = async () => {
+    hideModal()
+
+    const { newAchievements } = await checkAchievements()
+      
+    if (newAchievements.length > 0) {
+      enqueue(newAchievements)
+    }
+  }
 
   return (
     <View style={styles.card}>
@@ -21,7 +34,7 @@ export const PassiveIncomeModal = ({ earned, seconds }: Props) => {
       <Text style={styles.earned}>+{earned} монет</Text>
       <Text style={styles.time}>за {formatSeconds(seconds)}</Text>
 
-      <TouchableOpacity style={styles.button} onPress={hideModal} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.button} onPress={hideModalHandler} activeOpacity={0.8}>
         <Text style={styles.buttonText}>Забрать</Text>
       </TouchableOpacity>
     </View>

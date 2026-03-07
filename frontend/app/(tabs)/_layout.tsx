@@ -37,6 +37,13 @@ export default function TabLayout() {
                   tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
                 }}
               />
+              <Tabs.Screen
+                name="achievements"
+                options={{
+                  title: 'Достижения',
+                  tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
+                }}
+              />
             </Tabs>
           </LifecycleProvider>
         </UserProvider>

@@ -6,7 +6,6 @@ import { useClickBatcher } from '@/hooks/use-click-batcher'
 import { incrementCounter } from '@/services/counter'
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   StyleSheet,
   Text,
@@ -15,6 +14,8 @@ import {
 } from 'react-native'
 import { SignOutModal } from '@/components/SignOutModal'
 import { useModal } from '@/context/modal-context'
+import { useAchievementQueue } from '@/hooks/use-achievement-queue'
+import { checkAchievements } from '@/services/achievements'
 
 const LoadingView = memo(() => (
   <View style={styles.loadingContainer}>
@@ -33,6 +34,7 @@ export default function HomeScreen() {
   const { user, isLoading, error, setUser } = useUserContext()
   const { signOut } = useAuth()
   const { showModal, hideModal } = useModal()
+  const { enqueue } = useAchievementQueue()
 
   const [count, setCount] = useState(0)
 
@@ -64,12 +66,13 @@ export default function HomeScreen() {
 
   const { registerClick } = useClickBatcher(async (clicks: number) => {
     const { coins } = await incrementCounter(clicks)
+    const { newAchievements } = await checkAchievements()
 
-    setUser((prev) => {
-      if (!prev) return null
-      
-      return { ...prev, coins: coins }
-    })
+    setUser((prev) => prev ? { ...prev, coins } : null)
+
+    if (newAchievements.length > 0) {
+      enqueue(newAchievements)
+    }
   })
 
   const increment = useCallback(async () => {

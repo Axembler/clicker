@@ -4,11 +4,12 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 interface BuyItemModalProps {
   item: ItemData,
   owned: boolean,
+  isNotEnoughtCoins: boolean,
   onConfirm: (item: ItemData) => void
   onCancel: () => void
 }
 
-export function BuyItemModal({ item, onConfirm, onCancel, owned }: BuyItemModalProps) {
+export function BuyItemModal({ item, onConfirm, onCancel, owned, isNotEnoughtCoins }: BuyItemModalProps) {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { backgroundColor: item.color ?? '#7C3AED' }]} />
@@ -35,7 +36,7 @@ export function BuyItemModal({ item, onConfirm, onCancel, owned }: BuyItemModalP
             </View>
           ) : (
             <TouchableOpacity
-              style={styles.confirmButton}
+              style={[styles.confirmButton, isNotEnoughtCoins && styles.confirmButtonDisabled]}
               onPress={() => onConfirm(item)}
               activeOpacity={0.8}
             >
