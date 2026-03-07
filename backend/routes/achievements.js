@@ -13,7 +13,7 @@ router.get('/', auth, async (req, res) => {
   try {
     const [allAchievements, user] = await Promise.all([
       Achievement.find({}).lean(),
-      User.findById(req.userId).lean()
+      User.findById(req.user.id).lean()
     ])
 
     if (!user) {
@@ -28,8 +28,7 @@ router.get('/', auth, async (req, res) => {
     const achievementsWithStatus = allAchievements.map(achievement => ({
       ...achievement,
       unlocked: unlockedMap.has(achievement._id),
-      unlockedAt: unlockedMap.get(achievement._id)?.unlockedAt || null,
-      title: unlockedMap.get(achievement._id)?.title || null
+      unlockedAt: unlockedMap.get(achievement._id)?.unlockedAt || null
     }))
 
     res.json({
@@ -52,7 +51,7 @@ router.get('/', auth, async (req, res) => {
  */
 router.post('/check', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId)
+    const user = await User.findById(req.user.id)
 
     if (!user) {
       return res.status(404).json({ error: 'Пользователь не найден' })
