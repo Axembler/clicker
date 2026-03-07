@@ -21,7 +21,7 @@ router.get('/', auth, async (req, res) => {
     }
 
     const unlockedMap = new Map(
-      user.achievements.map(a => [a._id, a])
+      user.achievements.map(a => [a._id.toString(), a])
     )
 
     // Добавляем статус к каждому достижению
