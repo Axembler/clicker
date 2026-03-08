@@ -21,18 +21,12 @@ export function useClickBatcher(onSync: OnSyncFn) {
 
     pendingTimestamps.current = []
 
-    try {
-      await onSyncRef.current(timestampsToSend)
-    } catch (error) {
-      pendingTimestamps.current = [...timestampsToSend, ...pendingTimestamps.current]
-
-      console.error('Sync failed:', error)
-    }
+    await onSyncRef.current(timestampsToSend)
   }, [])
 
   const registerClick = useCallback(() => {
     const timestamp = Date.now()
-    
+
     pendingTimestamps.current.push(timestamp)
 
     if (pendingTimestamps.current.length >= MAX_PENDING) {
