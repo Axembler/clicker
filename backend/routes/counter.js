@@ -8,13 +8,13 @@ router.post('/increment', auth, async (req, res) => {
   try {
     const { timestamps } = req.body
 
+    const increment = timestamps.length
+
     const validationError = validateTimestamps(timestamps)
     
     if (validationError) {
       return res.status(400).json({ message: validationError })
     }
-
-    const increment = timestamps.length
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
@@ -27,7 +27,10 @@ router.post('/increment', auth, async (req, res) => {
           }
         }
       ],
-      { returnDocument: 'after' }
+      {
+        returnDocument: 'after',
+        updatePipeline: true
+      }
     )
 
     if (!user) {
