@@ -6,7 +6,7 @@ import { buyItem, ItemData } from '@/services/items'
 import { checkAchievements } from '@/services/achievements'
 import { useAchievementQueue } from '@/hooks/use-achievement-queue'
 import { useShop } from '@/hooks/use-shop'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useNotification } from '@/context/notification-context'
 import { getErrorMessage } from '@/utils/getErrorMessage'
 
@@ -75,6 +75,17 @@ export default function Shop() {
     [showModal, hideModal, handleBuy, isOwned, isNotEnoughCoins]
   )
 
+  const sortedData = useMemo(() => {
+    if (!data) return []
+
+    return [...data].sort((a, b) => {
+      const aOwned = isOwned(a) ? 1 : 0
+      const bOwned = isOwned(b) ? 1 : 0
+
+      return aOwned - bOwned
+    })
+  }, [data, isOwned])
+
   return (
     <View style={styles.container}>
       <View style={[styles.circle, styles.circleTopLeft]} />
@@ -115,7 +126,7 @@ export default function Shop() {
           />
         }
       >
-        {!isInitialLoading && data?.map((item) => {
+        {!isInitialLoading && sortedData?.map((item) => {
           const owned = isOwned(item)
 
           return (
@@ -125,14 +136,13 @@ export default function Shop() {
               activeOpacity={owned ? 1 : 0.8}
               onPress={() => openBuyModal(item)}
             >
-              <View style={[styles.imagePlaceholder, { backgroundColor: item.color }]}>
-                {owned && <View style={styles.ownedOverlay} />}
-              </View>
+              <View style={[styles.imagePlaceholder, { backgroundColor: item.color }]} />
 
               <View style={styles.cardBody}>
                 <Text style={[styles.itemName, owned && styles.textDisabled]} numberOfLines={2}>
                   {item.name}
                 </Text>
+
                 <View style={styles.cardFooter}>
                   <Text style={[styles.price, owned && styles.textDisabled]}>
                     🪙 {item.price}
@@ -273,18 +283,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  emoji: {
-    fontSize: 52,
-  },
   cardBody: {
+    justifyContent: 'space-between',
     padding: 12,
-  },
-  category: {
-    fontSize: 11,
-    color: '#999',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
+    height: 110
   },
   itemName: {
     fontSize: 14,
@@ -319,10 +321,6 @@ const styles = StyleSheet.create({
   },
   cardDisabled: {
     opacity: 0.5,
-  },
-  ownedOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.15)',
   },
   textDisabled: {
     color: '#999',
