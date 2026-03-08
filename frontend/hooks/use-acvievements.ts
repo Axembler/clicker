@@ -1,7 +1,9 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import { Achievement, AchievementsResponse } from '@/types/achievements'
 import { getAchievements } from '@/services/achievements'
+import { useNotification } from '@/context/notification-context'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 const sortAchievements = (achievements: Achievement[] | undefined): Achievement[] =>
   [...(achievements ?? [])].sort((a, b) => {
@@ -27,6 +29,8 @@ const INITIAL_STATE: AchievementsState = {
 }
 
 export function useAchievements() {
+  const { notify } = useNotification()
+
   const [state, setState] = useState<AchievementsState>(INITIAL_STATE)
 
   const fetchAchievements = useCallback(async (silent = false) => {
@@ -61,6 +65,10 @@ export function useAchievements() {
   const onRefresh = useCallback(() => {
     fetchAchievements(true)
   }, [fetchAchievements])
+
+  useEffect(() => {
+    if (state.error) notify('error', getErrorMessage(state.error))
+  }, [state.error, notify])
 
   useFocusEffect(
     useCallback(() => {

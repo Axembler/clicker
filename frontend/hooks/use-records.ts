@@ -1,6 +1,8 @@
+import { useNotification } from "@/context/notification-context"
 import { getRecords, getUserRecord } from "@/services/records"
+import { getErrorMessage } from "@/utils/getErrorMessage"
 import { useFocusEffect } from "expo-router"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 type SortField = 'clicks' | 'totalCoins'
 
@@ -22,6 +24,8 @@ type UserRecordData = {
 }
 
 export function useRecords() {
+  const { notify } = useNotification()
+  
   const [data, setData] = useState<RecordsData[]>([])
   const [myRank, setMyRank] = useState<UserRecordData | null>(null)
   const [sortField, setSortField]  = useState<SortField>('clicks')
@@ -69,6 +73,10 @@ export function useRecords() {
       fetchData()
     }, [fetchData])
   )
+
+  useEffect(() => {
+    if (error) notify('error', getErrorMessage(error))
+  }, [error, notify])
 
   const refresh = useCallback(() => fetchData(true), [fetchData])
 

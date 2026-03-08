@@ -7,18 +7,20 @@ import { checkAchievements } from '@/services/achievements'
 import { useAchievementQueue } from '@/hooks/use-achievement-queue'
 import { useShop } from '@/hooks/use-shop'
 import { useCallback } from 'react'
+import { useNotification } from '@/context/notification-context'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 export default function Shop() {
   const {
     data,
     isLoading,
     refreshing,
-    error,
     refresh
   } = useShop()
 
   const { refetchUser, user, setUser } = useUserContext()
   const { showModal, hideModal } = useModal()
+  const { notify } = useNotification()
   const { enqueue } = useAchievementQueue()
 
   const coins = user?.coins ?? null
@@ -53,8 +55,8 @@ export default function Shop() {
       }
 
       await refetchUser()
-    } catch (error) {
-      console.error('Ошибка при покупке:', error)
+    } catch (err) {
+      notify('error', getErrorMessage(err))
     }
   }, [isOwned, isNotEnoughCoins, coins, setUser, hideModal, enqueue, refetchUser])
 

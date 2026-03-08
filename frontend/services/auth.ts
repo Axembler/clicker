@@ -7,6 +7,7 @@ export interface AuthCredentials {
 
 export interface AuthResponse {
   token: string
+  message: string | null
   user: {
     id: string
     username: string
@@ -23,7 +24,7 @@ export const authService = {
     const data: AuthResponse = await response.json()
 
     if (!response.ok) {
-      throw new Error('Ошибка авторизации')
+      throw new Error(data?.message || 'Ошибка авторизации')
     }
 
     return data
@@ -40,7 +41,7 @@ export const authService = {
     const data: AuthResponse = await response.json()
 
     if (!response.ok) {
-      throw new Error('Ошибка регистрации')
+      throw new Error(data?.message || 'Ошибка регистрации')
     }
 
     return data

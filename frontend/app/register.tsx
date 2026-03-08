@@ -1,10 +1,11 @@
 import { useAuth } from '@/context/auth-context'
+import { useNotification } from '@/context/notification-context'
 import { authService } from '@/services/auth'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -15,32 +16,61 @@ import {
 export default function RegisterScreen() {
   const router = useRouter()
   const { signIn } = useAuth()
+  const { notify } = useNotification()
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleRegister = async () => {
-    if (!username || !password) {
-      Alert.alert('Ошибка', 'Заполни все поля')
-      return
+  const [errors, setErrors] = useState({
+    username: '',
+    password: '',
+  })
+
+  const handleUsernameChange = (text: string) => {
+    setUsername(text)
+    
+    if (errors.username) setErrors((prev) => ({ ...prev, username: '' }))
+  }
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text)
+    
+    if (errors.password) setErrors((prev) => ({ ...prev, password: '' }))
+  }
+
+  const validate = (): boolean => {
+    const newErrors = { username: '', password: '' }
+    let isValid = true
+
+    if (!username.trim()) {
+      newErrors.username = 'Введите имя пользователя'
+      isValid = false
     }
 
-    if (password.length < 6) {
-      Alert.alert('Ошибка', 'Пароль должен быть минимум 6 символов')
-      return
+    if (!password) {
+      newErrors.password = 'Введите пароль'
+      isValid = false
+    } else if (password.length < 6) {
+      newErrors.password = 'Пароль должен быть минимум 6 символов'
+      isValid = false
     }
+
+    setErrors(newErrors)
+    return isValid
+  }
+
+  const handleRegister = async () => {
+    if (!validate()) return
 
     setLoading(true)
 
     try {
       const { token } = await authService.register({ username, password })
-
       await signIn(token)
-
       router.replace('/(tabs)')
     } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось подключиться к серверу')
+      notify('error', getErrorMessage(error))
     } finally {
       setLoading(false)
     }
@@ -52,22 +82,28 @@ export default function RegisterScreen() {
       <Text style={styles.title}>Регистрация</Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, errors.username ? styles.inputError : null]}
         placeholder="Имя пользователя"
         placeholderTextColor="#999"
         value={username}
-        onChangeText={setUsername}
+        onChangeText={handleUsernameChange}
         autoCapitalize="none"
       />
+      {errors.username ? (
+        <Text style={styles.errorText}>{errors.username}</Text>
+      ) : null}
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, errors.password ? styles.inputError : null]}
         placeholder="Пароль (минимум 6 символов)"
         placeholderTextColor="#999"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={handlePasswordChange}
         secureTextEntry
       />
+      {errors.password ? (
+        <Text style={styles.errorText}>{errors.password}</Text>
+      ) : null}
 
       <TouchableOpacity
         style={styles.button}
@@ -114,7 +150,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#333',
-    marginBottom: 16,
+    marginBottom: 4,
+  },
+  inputError: {
+    borderColor: '#e53935',
+  },
+  errorText: {
+    width: '100%',
+    color: '#e53935',
+    fontSize: 13,
+    marginBottom: 12,
+    paddingHorizontal: 4,
   },
   button: {
     width: '100%',

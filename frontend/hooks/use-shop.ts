@@ -1,8 +1,12 @@
+import { useNotification } from "@/context/notification-context"
 import { getItems, ItemData } from "@/services/items"
+import { getErrorMessage } from "@/utils/getErrorMessage"
 import { useFocusEffect } from "expo-router"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 export function useShop() {
+  const { notify } = useNotification()
+
   const [data, setData] = useState<ItemData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -27,6 +31,10 @@ export function useShop() {
       setRefreshing(false)
     }
   }, [])
+
+  useEffect(() => {
+    if (error) notify('error', getErrorMessage(error))
+  }, [error, notify])
 
   useFocusEffect(
     useCallback(() => {

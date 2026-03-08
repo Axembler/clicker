@@ -17,7 +17,7 @@ interface AchievementCardProps {
 }
 
 export default function Achievements() {
-  const { data, isLoading, isRefreshing, error, sort, onRefresh } = useAchievements()
+  const { data, isLoading, isRefreshing, sort, onRefresh } = useAchievements()
 
   const isInitialLoading = isLoading && !data
 
@@ -78,11 +78,6 @@ export default function Achievements() {
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#A78BFA" />
           <Text style={styles.loadingText}>Загрузка достижений...</Text>
-        </View>
-      ) : error ? (
-        <View style={styles.centered}>
-          <Text style={styles.errorEmoji}>😕</Text>
-          <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : (
         <ScrollView

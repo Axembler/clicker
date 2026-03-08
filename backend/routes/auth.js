@@ -13,7 +13,7 @@ router.post('/register', async (req, res) => {
     const existingUser = await User.findOne({ username })
 
     if (existingUser) {
-      return res.status(400).json({ message: 'Пользователь уже существует' })
+      return res.status(400).json({ message: 'Никнейм уже занят' })
     }
 
     // Хеширование пароля
@@ -40,7 +40,7 @@ router.post('/register', async (req, res) => {
       }
     })
   } catch (err) {
-    res.status(500).json({ message: 'Ошибка сервера', error: err.message })
+    res.status(500).json({ message: err.message })
   }
 })
 
@@ -53,7 +53,7 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ username })
     
     if (!user) {
-      return res.status(400).json({ message: `Пользователя ${username} не существует` })
+      return res.status(400).json({ message: 'Неверное имя или пароль' })
     }
 
     // Проверка пароля
@@ -78,7 +78,7 @@ router.post('/login', async (req, res) => {
       }
     })
   } catch (err) {
-    res.status(500).json({ message: 'Ошибка сервера', error: err.message })
+    res.status(500).json({ message: err.message })
   }
 })
 

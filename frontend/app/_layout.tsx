@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 
 import { AuthProvider } from '@/context/auth-context'
+import { NotificationProvider } from '@/context/notification-context'
 
 export const unstable_settings = {
   anchor: '(tabs)'
@@ -11,11 +12,14 @@ export const unstable_settings = {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="auto" />
+      <NotificationProvider>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+        </Stack>
+        
+        <StatusBar style="auto" />
+      </NotificationProvider>
     </AuthProvider>
   )
 }

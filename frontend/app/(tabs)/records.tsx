@@ -22,7 +22,7 @@ const ListEmpty = () => (
 )
 
 export default function RecordsScreen() {
-  const { data, myRank, isLoading, refreshing, error, refresh } = useRecords()
+  const { data, myRank, isLoading, refreshing, refresh } = useRecords()
 
   const isInitialLoading = isLoading && !data
 
@@ -63,8 +63,6 @@ export default function RecordsScreen() {
         <Text style={styles.title}>🏆 Рекорды</Text>
         <Text style={styles.subtitle}>Лучшие игроки</Text>
       </View>
-
-      {error && <ErrorBanner message={error} onRetry={refresh} />}
 
       <View style={styles.tableCard}>
         <TableHeader />
