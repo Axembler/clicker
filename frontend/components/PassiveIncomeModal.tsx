@@ -20,7 +20,9 @@ export const PassiveIncomeModal = ({ earned, seconds }: Props) => {
     const { newAchievements } = await checkAchievements()
       
     if (newAchievements.length > 0) {
-      enqueue(newAchievements)
+      setTimeout(() => {
+        enqueue(newAchievements)
+      }, 350)
     }
   }
 

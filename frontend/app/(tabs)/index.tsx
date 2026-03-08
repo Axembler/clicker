@@ -1,9 +1,4 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useAuth } from '@/context/auth-context'
-import { useUserContext } from '@/context/user-context'
-import { formatNumber } from '@/helpers/formatNumber'
-import { useClickBatcher } from '@/hooks/use-click-batcher'
-import { incrementCounter } from '@/services/counter'
 import {
   ActivityIndicator,
   Animated,
@@ -12,10 +7,20 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { useAuth } from '@/context/auth-context'
+import { useUserContext } from '@/context/user-context'
+import { formatNumber } from '@/helpers/formatNumber'
+import { useClickBatcher } from '@/hooks/use-click-batcher'
+import { incrementCounter } from '@/services/counter'
 import { SignOutModal } from '@/components/SignOutModal'
 import { useModal } from '@/context/modal-context'
 import { useAchievementQueue } from '@/hooks/use-achievement-queue'
 import { checkAchievements } from '@/services/achievements'
+
+type LocalStats = {
+  localClicks: number
+  localCoins: number
+}
 
 const LoadingView = memo(() => (
   <View style={styles.loadingContainer}>
@@ -31,16 +36,18 @@ const ErrorView = memo(({ message }: { message: string }) => (
 ))
 
 export default function HomeScreen() {
-  const { user, isLoading, error, setUser } = useUserContext()
+  const isInitialized = useRef(false)
+  const prevCoinsRef = useRef<number | null>(null)
+  const { user, isLoading, error, setUser, refetchUser } = useUserContext()
   const { signOut } = useAuth()
   const { showModal, hideModal } = useModal()
   const { enqueue } = useAchievementQueue()
 
-  const [count, setCount] = useState(0)
+  const [stats, setStats] = useState<LocalStats>({ localClicks: 0, localCoins: 0 })
 
   const activeDots = useMemo(
-    () => (count % 5 === 0 && count > 0 ? 5 : count % 5),
-    [count]
+    () => (stats.localClicks % 5 === 0 && stats.localClicks > 0 ? 5 : stats.localClicks % 5),
+    [stats.localClicks]
   )
 
   const scaleAnim = useRef(new Animated.Value(1)).current
@@ -64,30 +71,54 @@ export default function HomeScreen() {
     )
   }
 
-  const { registerClick } = useClickBatcher(async (clicks: number) => {
-    const { coins } = await incrementCounter(clicks)
-    const { newAchievements } = await checkAchievements()
+  const { registerClick } = useClickBatcher(async (rClicks: number) => {
+    const { coins, clicks } = await incrementCounter(rClicks)
+
+    setStats({ localClicks: clicks, localCoins: coins })
 
     setUser((prev) => prev ? { ...prev, coins } : null)
 
+    const { newAchievements } = await checkAchievements()
+
     if (newAchievements.length > 0) {
       enqueue(newAchievements)
+
+      await refetchUser()
     }
   })
 
   const increment = useCallback(async () => {
     pulse()
 
-    setCount(prev => prev + 1)
+    setStats((prev) => ({
+      localClicks: prev.localClicks + 1,
+      localCoins: prev.localCoins + (user?.clickPower ?? 1)
+    }))
 
     registerClick()
-  }, [pulse, registerClick])
+  }, [pulse, registerClick, user?.clickPower])
 
   useEffect(() => {
-    if (user?.clicks) {
-      setCount(user.clicks)
+    if (!user) return
+
+    // Первичная инициализация
+    if (!isInitialized.current) {
+      setStats({ localClicks: user.clicks, localCoins: user.coins })
+
+      isInitialized.current = true
+
+      prevCoinsRef.current = user.coins
+
+      return
     }
-  }, [user?.clicks])
+
+    // Если coins изменились извне
+    if (prevCoinsRef.current !== user.coins) {
+      setStats(prev => ({ ...prev, localCoins: user.coins }))
+
+      prevCoinsRef.current = user.coins
+    }
+  }, [user])
 
   if (isLoading) return <LoadingView />
   if (error) return <ErrorView message={error} />
@@ -121,8 +152,8 @@ export default function HomeScreen() {
 
         <View style={styles.statCard}>
           <Text style={styles.statEmoji}>💰</Text>
-          <Text style={styles.statValue}>{formatNumber(user?.coins)}</Text>
-          <Text style={styles.statLabel}>всего</Text>
+          <Text style={styles.statValue}>{formatNumber(stats.localCoins)}</Text>
+          <Text style={styles.statLabel}>баланс</Text>
         </View>
       </View>
 
@@ -134,7 +165,13 @@ export default function HomeScreen() {
 
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Всего нажатий</Text>
-        <Text style={styles.number}>{count}</Text>
+        <Text
+          style={styles.number}
+          adjustsFontSizeToFit
+          numberOfLines={1}
+        >
+          {stats.localClicks}
+        </Text>
 
         <View style={styles.dots}>
           {[...Array(5)].map((_, i) => (
@@ -156,12 +193,6 @@ export default function HomeScreen() {
           <Text style={styles.buttonText}>Нажми меня</Text>
         </TouchableOpacity>
       </Animated.View>
-
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPressIn={handleSignOut}
-        activeOpacity={0.7}
-      />
     </View>
   )
 }
@@ -212,10 +243,10 @@ const styles = StyleSheet.create({
   },
   statCard: {
     alignItems: 'center',
-    gap: 2,
+    gap: 1,
   },
   statEmoji: {
-    fontSize: 22,
+    fontSize: 18,
     marginBottom: 2,
   },
   statValue: {
@@ -224,7 +255,7 @@ const styles = StyleSheet.create({
     color: '#5B21B6',
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#C4B5FD',
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -300,7 +331,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   number: {
-    fontSize: 88,
+    fontSize: 80,
     fontWeight: '800',
     color: '#5B21B6',
     lineHeight: 96,

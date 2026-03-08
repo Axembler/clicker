@@ -1,5 +1,5 @@
 import { CheckedAchievement } from '@/types/achievements'
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 
 interface AchievementModalProps {
   achievement: CheckedAchievement

@@ -1,5 +1,5 @@
-// context/user-context.tsx
 import { getUser } from '@/services/user'
+import { useFocusEffect } from 'expo-router'
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode, Dispatch, SetStateAction } from 'react'
 
 interface UserItem {
@@ -57,9 +57,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  useEffect(() => {
-    fetchUser()
-  }, [fetchUser])
+  useFocusEffect(
+    useCallback(() => {
+      fetchUser()
+    }, [fetchUser])
+  )
 
   return (
     <UserContext.Provider

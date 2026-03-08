@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { memo, useMemo } from 'react'
 import {
   View,
   Text,
@@ -6,54 +6,44 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  DimensionValue,
 } from 'react-native'
-import { Achievement, AchievementsResponse } from '@/types/achievements'
-import { getAchievements } from '@/services/achievements'
+import { Achievement } from '@/types/achievements'
+import { useAchievements } from '@/hooks/use-acvievements'
+import { formatDate } from '@/helpers/formatDate'
+
+interface AchievementCardProps {
+  achievement: Achievement
+}
 
 export default function Achievements() {
-  const [data, setData] = useState<AchievementsResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { data, isLoading, isRefreshing, error, sort, onRefresh } = useAchievements()
 
-  const fetchAchievements = async (silent = false) => {
-    try {
-      if (!silent) setIsLoading(true)
-      setError(null)
-      const result = await getAchievements()
-      setData(result)
-    } catch (e) {
-      setError('Не удалось загрузить достижения')
-    } finally {
-      setIsLoading(false)
-      setIsRefreshing(false)
-    }
-  }
+  const isInitialLoading = isLoading && !data
 
-  const sort = (data: Achievement[] | undefined) => [...(data ?? [])].sort((a, b) => {
-    const fieldComparison = a.condition.field.localeCompare(b.condition.field)
-    
-    if (fieldComparison !== 0) return fieldComparison
-    
-    return a.condition.value - b.condition.value
-  })
+  const sortedAchievements = useMemo(
+    () => sort(data?.achievements ?? []),
+    [data?.achievements, sort]
+  )
 
-  const onRefresh = () => {
-    setIsRefreshing(true)
-    fetchAchievements(true)
-  }
+  const progressPercent = useMemo(() => {
+    if (!data) return 0
 
-  useEffect(() => {
-    fetchAchievements()
-  }, [])
+    const { total = 0, unlocked = 0 } = data
+
+    return total > 0 ? Math.round((unlocked / total) * 100) : 0
+  }, [data])
+
+  const progressBarStyle = useMemo(
+    () => [styles.progressBarFill, { width: `${progressPercent}%` as DimensionValue }],
+    [progressPercent]
+  )
 
   return (
     <View style={styles.container}>
-      {/* Декоративные круги */}
       <View style={[styles.circle, styles.circleTopLeft]} />
       <View style={[styles.circle, styles.circleBottomRight]} />
 
-      {/* Шапка */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
@@ -63,14 +53,13 @@ export default function Achievements() {
             </Text>
           </View>
 
-          {/* Прогресс-бейдж */}
           <View style={styles.progressBadge}>
             <Text style={styles.progressBadgeLabel}>Прогресс</Text>
-            {isLoading ? (
+            {isInitialLoading ? (
               <Text style={styles.progressBadgeValue}>...</Text>
             ) : data ? (
               <Text style={styles.progressBadgeValue}>
-                🏆 {data.total > 0 ? Math.round((data.unlocked / data.total) * 100) : 0}%
+                🏆 {progressPercent}%
               </Text>
             ) : (
               <Text style={styles.progressBadgeValue}>—</Text>
@@ -78,25 +67,14 @@ export default function Achievements() {
           </View>
         </View>
 
-        {/* Прогресс-бар */}
         {data && (
           <View style={styles.progressBarContainer}>
-            <View
-              style={[
-                styles.progressBarFill,
-                {
-                  width: `${data.total > 0
-                    ? Math.round((data.unlocked / data.total) * 100)
-                    : 0}%`,
-                },
-              ]}
-            />
+            <View style={progressBarStyle} />
           </View>
         )}
       </View>
 
-      {/* Контент */}
-      {isLoading ? (
+      {isInitialLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#A78BFA" />
           <Text style={styles.loadingText}>Загрузка достижений...</Text>
@@ -118,7 +96,7 @@ export default function Achievements() {
             />
           }
         >
-          {sort(data?.achievements ?? []).map((achievement: Achievement) => (
+          {sortedAchievements.map((achievement: Achievement) => (
             <AchievementCard key={achievement._id} achievement={achievement} />
           ))}
         </ScrollView>
@@ -127,31 +105,15 @@ export default function Achievements() {
   )
 }
 
-// ─── Карточка достижения ──────────────────────────────────────────────────────
-
-interface AchievementCardProps {
-  achievement: Achievement
-}
-
-function AchievementCard({ achievement }: AchievementCardProps) {
+const AchievementCard = memo(({ achievement }: AchievementCardProps) => {
   const { unlocked, title, description, reward, unlockedAt } = achievement
-
-  const formattedDate = unlockedAt
-    ? new Date(unlockedAt).toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-      })
-    : null
 
   return (
     <View style={[styles.card, unlocked && styles.cardUnlocked]}>
-      {/* Иконка */}
       <View style={[styles.iconContainer, unlocked ? styles.iconUnlocked : styles.iconLocked]}>
         <Text style={styles.iconEmoji}>{unlocked ? '🏆' : '🔒'}</Text>
       </View>
 
-      {/* Основной контент */}
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
           <Text
@@ -161,7 +123,6 @@ function AchievementCard({ achievement }: AchievementCardProps) {
             {title ?? description}
           </Text>
 
-          {/* Награда */}
           <View style={[styles.rewardBadge, unlocked && styles.rewardBadgeUnlocked]}>
             <Text style={[styles.rewardText, unlocked && styles.rewardTextUnlocked]}>
               🪙 {reward.coins}
@@ -173,16 +134,13 @@ function AchievementCard({ achievement }: AchievementCardProps) {
           {description}
         </Text>
 
-        {/* Дата открытия */}
-        {unlocked && formattedDate && (
-          <Text style={styles.unlockedDate}>Открыто {formattedDate}</Text>
+        {unlocked && unlockedAt && (
+          <Text style={styles.unlockedDate}>Открыто {formatDate(unlockedAt)}</Text>
         )}
       </View>
     </View>
   )
-}
-
-// ─── Стили ────────────────────────────────────────────────────────────────────
+})
 
 const styles = StyleSheet.create({
   container: {
@@ -192,7 +150,6 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
 
-  // Декоративные круги
   circle: {
     position: 'absolute',
     borderRadius: 999,
@@ -213,7 +170,6 @@ const styles = StyleSheet.create({
     right: -60,
   },
 
-  // Шапка
   header: {
     paddingHorizontal: 16,
     paddingTop: 60,
@@ -239,7 +195,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Прогресс-бейдж
   progressBadge: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -263,7 +218,6 @@ const styles = StyleSheet.create({
     color: '#7C3AED',
   },
 
-  // Прогресс-бар
   progressBarContainer: {
     height: 6,
     backgroundColor: '#EDE9FE',
@@ -276,14 +230,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
 
-  // Список
   list: {
     paddingTop: 16,
     paddingBottom: 40,
     gap: 12,
   },
 
-  // Карточка
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -305,7 +257,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
   },
 
-  // Иконка
   iconContainer: {
     width: 52,
     height: 52,
@@ -324,7 +275,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
   },
 
-  // Контент карточки
   cardContent: {
     flex: 1,
     gap: 4,
@@ -353,7 +303,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Награда
   rewardBadge: {
     backgroundColor: '#F3F4F6',
     borderRadius: 10,
@@ -372,7 +321,6 @@ const styles = StyleSheet.create({
     color: '#7C3AED',
   },
 
-  // Утилиты
   textMuted: {
     color: '#BBBBBB',
   },

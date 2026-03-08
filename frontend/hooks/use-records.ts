@@ -1,5 +1,6 @@
 import { getRecords, getUserRecord } from "@/services/records"
-import { useCallback, useEffect, useState } from "react"
+import { useFocusEffect } from "expo-router"
+import { useCallback, useState } from "react"
 
 type SortField = 'clicks' | 'totalCoins'
 
@@ -21,28 +22,28 @@ type UserRecordData = {
 }
 
 export function useRecords() {
-  const [records, setRecords] = useState<RecordsData[]>([])
+  const [data, setData] = useState<RecordsData[]>([])
   const [myRank, setMyRank] = useState<UserRecordData | null>(null)
   const [sortField, setSortField]  = useState<SortField>('clicks')
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const fetchData = useCallback(async (isRefresh = false) => {
     try {
-      isRefresh ? setRefreshing(true) : setLoading(true)
+      isRefresh ? setRefreshing(true) : setIsLoading(true)
       setError(null)
 
       const [recordsData, userRecordData] = await Promise.all([
         getRecords(),
-        getUserRecord(),
+        getUserRecord()
       ])
 
       if (!recordsData.success) {
         throw new Error(recordsData.message ?? 'Ошибка сервера')
       }
 
-      setRecords(recordsData.records)
+      setData(recordsData.records)
 
       if (userRecordData.success) {
         setMyRank({
@@ -53,30 +54,34 @@ export function useRecords() {
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Неизвестная ошибка'
+
       setError(message)
+
       console.error('Error:', err)
     } finally {
-      setLoading(false)
+      setIsLoading(false)
       setRefreshing(false)
     }
   }, [])
 
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
+  useFocusEffect(
+    useCallback(() => {
+      fetchData()
+    }, [fetchData])
+  )
 
   const refresh = useCallback(() => fetchData(true), [fetchData])
 
-  const sortedRecords = [...records].sort((a, b) =>
+  const sortedRecords = [...data].sort((a, b) =>
     b[sortField] - a[sortField]
   ).map((item, index) => ({ ...item, rank: index + 1 }))
 
   return {
-    records: sortedRecords,
+    data: sortedRecords,
     myRank,
     sortField,
     setSortField,
-    loading,
+    isLoading,
     refreshing,
     error,
     refresh

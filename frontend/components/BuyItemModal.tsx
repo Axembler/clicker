@@ -4,12 +4,15 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 interface BuyItemModalProps {
   item: ItemData,
   owned: boolean,
-  isNotEnoughtCoins: boolean,
+  notEnoughCoins: boolean,
   onConfirm: (item: ItemData) => void
   onCancel: () => void
 }
 
-export function BuyItemModal({ item, onConfirm, onCancel, owned, isNotEnoughtCoins }: BuyItemModalProps) {
+export function BuyItemModal({ item, onConfirm, onCancel, owned, notEnoughCoins }: BuyItemModalProps) {
+  const isDisabled = owned || notEnoughCoins
+  const buttonText = owned ? 'Куплено ✓' : 'Купить'
+
   return (
     <View style={styles.container}>
       <View style={[styles.header, { backgroundColor: item.color ?? '#7C3AED' }]} />
@@ -25,22 +28,28 @@ export function BuyItemModal({ item, onConfirm, onCancel, owned, isNotEnoughtCoi
 
         <Text style={styles.price}>🪙 {item.price}</Text>
 
+        {notEnoughCoins && !owned && (
+          <Text style={styles.notEnoughCoinsText}>
+            Недостаточно монет
+          </Text>
+        )}
+
         <View style={styles.buttons}>
           <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
             <Text style={styles.cancelText}>Отмена</Text>
           </TouchableOpacity>
 
-          {owned ? (
+          {isDisabled ? (
             <View style={[styles.confirmButton, styles.confirmButtonDisabled]}>
-              <Text style={styles.confirmText}>Куплено ✓</Text>
+              <Text style={styles.confirmText}>{buttonText}</Text>
             </View>
           ) : (
             <TouchableOpacity
-              style={[styles.confirmButton, isNotEnoughtCoins && styles.confirmButtonDisabled]}
+              style={styles.confirmButton}
               onPress={() => onConfirm(item)}
               activeOpacity={0.8}
             >
-              <Text style={styles.confirmText}>Купить</Text>
+              <Text style={styles.confirmText}>{buttonText}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -59,6 +68,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 20,
     elevation: 6,
+  },
+  notEnoughCoinsText: {
+    color: '#ef8888',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 12,
   },
   header: {
     width: '100%',

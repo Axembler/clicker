@@ -1,83 +1,76 @@
-import { useCallback, useEffect, useState } from 'react'
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { useFocusEffect } from 'expo-router'
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { BuyItemModal } from '@/components/BuyItemModal'
 import { useModal } from '@/context/modal-context'
 import { useUserContext } from '@/context/user-context'
-import { buyItem, getItems, ItemData } from '@/services/items'
-import { UserItems } from '@/services/user'
+import { buyItem, ItemData } from '@/services/items'
 import { checkAchievements } from '@/services/achievements'
 import { useAchievementQueue } from '@/hooks/use-achievement-queue'
+import { useShop } from '@/hooks/use-shop'
+import { useCallback } from 'react'
 
 export default function Shop() {
-  const [coins, setCoins] = useState<number | null>(null)
-  const [items, setItems] = useState<ItemData[] | null>(null)
-  const [userItems, setUserItems] = useState<UserItems | null>(null)
-  const { refetchUser, isLoading, user } = useUserContext()
+  const {
+    data,
+    isLoading,
+    refreshing,
+    error,
+    refresh
+  } = useShop()
+
+  const { refetchUser, user, setUser } = useUserContext()
   const { showModal, hideModal } = useModal()
   const { enqueue } = useAchievementQueue()
 
-  const isOwned = (ownedItem: ItemData) => userItems?.some((item) => item._id === ownedItem._id) ?? false
+  const coins = user?.coins ?? null
+  const userItems = user?.items ?? null
 
-  const handleBuy = async (item: ItemData) => {
-    const owned = isOwned(item)
-    const isNotEnoughtCoins = coins && coins < item.price
+  const isInitialLoading = isLoading && !data
 
-    if (owned || isNotEnoughtCoins) return
+  const isOwned = useCallback(
+    (ownedItem: ItemData) =>
+      userItems?.some((item) => item._id === ownedItem._id) ?? false,
+    [userItems]
+  )
+  const isNotEnoughCoins = useCallback(
+    (item: ItemData) => item.price > (coins ?? 0),
+    [coins]
+  )
+
+  const handleBuy = useCallback(async (item: ItemData) => {
+    if (isOwned(item) || isNotEnoughCoins(item)) return
 
     try {
-      await buyItem(item._id)
+      const { coins: newCoins } = await buyItem(item._id)
+
+      setUser((prev) => prev ? { ...prev, coins: newCoins } : null)
+
+      hideModal()
 
       const { newAchievements } = await checkAchievements()
-      
+
       if (newAchievements.length > 0) {
-        enqueue(newAchievements)
+        setTimeout(() => enqueue(newAchievements), 350)
       }
 
       await refetchUser()
-
-      hideModal()
     } catch (error) {
-      console.error(error)
+      console.error('Ошибка при покупке:', error)
     }
-  }
+  }, [isOwned, isNotEnoughCoins, coins, setUser, hideModal, enqueue, refetchUser])
 
-  const openBuyModal = (item: ItemData) => {
-    const owned = isOwned(item)
-    const isNotEnoughtCoins = coins && coins < item.price
-
-    showModal(
-      <BuyItemModal
-        item={item}
-        onConfirm={() => handleBuy(item)}
-        owned={owned}
-        isNotEnoughtCoins={isNotEnoughtCoins || true}
-        onCancel={hideModal}
-      />
-    )
-  }
-
-  useEffect(() => {
-    if (user) {
-      setCoins(user.coins)
-      setUserItems(user.items)
-    }
-  }, [user])
-
-  const fetchItems = useCallback(async () => {
-    try {
-      const fetchedItems = await getItems()
-
-      setItems(fetchedItems)
-    } catch (error) {
-      console.error('Ошибка загрузки предметов:', error)
-    }
-  }, [])
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchItems()
-    }, [])
+  const openBuyModal = useCallback(
+    (item: ItemData) => {
+      showModal(
+        <BuyItemModal
+          item={item}
+          onConfirm={() => handleBuy(item)}
+          owned={isOwned(item)}
+          notEnoughCoins={isNotEnoughCoins(item)}
+          onCancel={hideModal}
+        />
+      )
+    },
+    [showModal, hideModal, handleBuy, isOwned, isNotEnoughCoins]
   )
 
   return (
@@ -90,13 +83,13 @@ export default function Shop() {
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.headerTitle}>Магазин</Text>
-            <Text style={styles.headerSubtitle}>{items?.length || 0} товаров</Text>
+            <Text style={styles.headerSubtitle}>{data?.length || 0} товаров</Text>
           </View>
 
           {/* Баланс */}
           <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Баланс</Text>
-            {isLoading ? (
+            {isInitialLoading ? (
               <Text style={styles.balanceLoading}>...</Text>
             ) : coins !== null ? (
               <Text style={styles.balanceAmount}>🪙 {coins}</Text>
@@ -111,8 +104,16 @@ export default function Shop() {
       <ScrollView
         contentContainerStyle={styles.grid}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            tintColor="#7C3AED"
+            colors={['#7C3AED']}
+          />
+        }
       >
-        {!isLoading && items?.map((item) => {
+        {!isInitialLoading && data?.map((item) => {
           const owned = isOwned(item)
 
           return (
