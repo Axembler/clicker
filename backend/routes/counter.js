@@ -2,16 +2,19 @@ const express = require('express')
 const router = express.Router()
 const User = require('../models/User')
 const auth = require('../middleware/auth')
+const { validateTimestamps } = require('../services/clickValidation')
 
-// Увеличить клики и монеты пользователя
 router.post('/increment', auth, async (req, res) => {
   try {
-    const { increment = 1 } = req.body
+    const { timestamps } = req.body
 
-    // Защита от некорректных значений
-    if (!Number.isInteger(increment) || increment < 1 || increment > 1000) {
-      return res.status(400).json({ message: 'Некорректное значение increment' })
+    const validationError = validateTimestamps(timestamps)
+    
+    if (validationError) {
+      return res.status(400).json({ message: validationError })
     }
+
+    const increment = timestamps.length
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
@@ -24,10 +27,7 @@ router.post('/increment', auth, async (req, res) => {
           }
         }
       ],
-      {
-        returnDocument: 'after',
-        updatePipeline: true
-      }
+      { returnDocument: 'after' }
     )
 
     if (!user) {
