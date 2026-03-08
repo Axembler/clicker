@@ -5,18 +5,20 @@ interface CounterData {
   coins: number
 }
 
-export const incrementCounter = async (clicks: number): Promise<CounterData> => {
+export const incrementCounter = async (timestamps: number[]): Promise<CounterData> => {
   const response = await apiClient('/counter/increment', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ increment: clicks })
+    body: JSON.stringify({ timestamps })
   })
-
-  if (!response.ok) {
-    throw new Error('Ошибка прибавления счетчика')
-  }
-
+  
   const data = await response.json()
+  
+  if (!response.ok) {
+    console.error('Server error details:', data)
+    throw new Error(data?.error || data?.message || 'Ошибка сервера')
+  }
 
   return data
 }
+

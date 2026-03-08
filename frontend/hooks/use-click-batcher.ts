@@ -3,10 +3,10 @@ import { useRef, useCallback, useEffect } from 'react'
 const SYNC_DELAY = 2000
 const MAX_PENDING = 50
 
-type OnSyncFn = (clicks: number) => Promise<void>
+type OnSyncFn = (timestamps: number[]) => Promise<void>
 
 export function useClickBatcher(onSync: OnSyncFn) {
-  const pendingClicks = useRef<number>(0)
+  const pendingTimestamps = useRef<number[]>([])
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onSyncRef = useRef<OnSyncFn>(onSync)
 
@@ -15,35 +15,43 @@ export function useClickBatcher(onSync: OnSyncFn) {
   })
 
   const flush = useCallback(async () => {
-    if (pendingClicks.current === 0) return
+    if (pendingTimestamps.current.length === 0) return
 
-    const clicksToSend = pendingClicks.current
-    pendingClicks.current = 0
+    const timestampsToSend = pendingTimestamps.current
+
+    pendingTimestamps.current = []
 
     try {
-      await onSyncRef.current(clicksToSend)
+      await onSyncRef.current(timestampsToSend)
     } catch (error) {
-      pendingClicks.current += clicksToSend
+      pendingTimestamps.current = [...timestampsToSend, ...pendingTimestamps.current]
+
       console.error('Sync failed:', error)
     }
   }, [])
 
   const registerClick = useCallback(() => {
-    pendingClicks.current += 1
+    const timestamp = Date.now()
+    
+    pendingTimestamps.current.push(timestamp)
 
-    if (pendingClicks.current >= MAX_PENDING) {
+    if (pendingTimestamps.current.length >= MAX_PENDING) {
       clearTimeout(timerRef.current ?? undefined)
+
       flush()
+
       return
     }
 
     clearTimeout(timerRef.current ?? undefined)
+
     timerRef.current = setTimeout(flush, SYNC_DELAY)
   }, [flush])
 
   useEffect(() => {
     return () => {
       clearTimeout(timerRef.current ?? undefined)
+
       flush()
     }
   }, [flush])

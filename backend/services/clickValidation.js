@@ -1,6 +1,6 @@
 const MIN_CLICK_INTERVAL_MS = 20
-const MAX_TIMESTAMPS = 50
-const MAX_TIMESTAMP_AGE_MS = 30_000
+const MAX_TIMESTAMPS = 250
+const MAX_TIMESTAMP_AGE_MS = 60_000
 
 // Минимальное СКО интервалов
 const MIN_INTERVAL_STD_DEV_MS = 10

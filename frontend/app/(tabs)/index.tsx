@@ -71,8 +71,10 @@ export default function HomeScreen() {
     )
   }
 
-  const { registerClick } = useClickBatcher(async (rClicks: number) => {
-    const { coins, clicks } = await incrementCounter(rClicks)
+  const { registerClick } = useClickBatcher(async (timestamps) => {
+    const { coins, clicks } = await incrementCounter(timestamps)
+
+    console.log(timestamps)
 
     setStats({ localClicks: clicks, localCoins: coins })
 

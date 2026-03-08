@@ -213,13 +213,13 @@ describe('validateTimestamps — граничные случаи', () => {
     const result = validateTimestamps([now + 999])
     expect(result).toBeNull()
   })
-  test('массив из ровно 50 человекоподобных кликов проходит валидацию', () => {
-    const timestamps = makeHumanTimestamps(50, 20_000)
+  test('массив из ровно 250 человекоподобных кликов проходит валидацию', () => {
+    const timestamps = makeHumanTimestamps(250, 60_000)
     expect(validateTimestamps(timestamps)).toBeNull()
   })
 
-  test('массив из 51 клика возвращает ошибку превышения лимита', () => {
-    const ts = makeTimestamps(51, 200, 0, 25_000)
-    expect(validateTimestamps(ts)).toBe('Слишком много кликов за один запрос (макс. 50)')
+  test('массив из 251 клика возвращает ошибку превышения лимита', () => {
+    const ts = makeTimestamps(251, 200, 0, 60_000)
+    expect(validateTimestamps(ts)).toBe('Слишком много кликов за один запрос (макс. 250)')
   })
 })
