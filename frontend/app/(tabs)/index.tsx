@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Animated,
+  GestureResponderEvent,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -18,6 +19,8 @@ import { useAchievementQueue } from '@/hooks/use-achievement-queue'
 import { checkAchievements } from '@/services/achievements'
 import { useNotification } from '@/context/notification-context'
 import { getErrorMessage } from '@/utils/getErrorMessage'
+import { useFloatingNumbers } from '@/hooks/use-floating-numbers'
+import { FloatingNumbers } from '@/components/FloatingNumbers'
 
 type LocalStats = {
   localClicks: number
@@ -38,15 +41,17 @@ const ErrorView = memo(({ message }: { message: string }) => (
 ))
 
 export default function HomeScreen() {
-  const isInitialized = useRef(false)
-  const prevCoinsRef = useRef<number | null>(null)
-  const pendingClicksRef = useRef(0)
   const { notify } = useNotification()
-  
-  const { user, isLoading, error, setUser, refetchUser } = useUserContext()
+  const { floatingNumbers, spawnNumber } = useFloatingNumbers()
   const { signOut } = useAuth()
   const { showModal, hideModal } = useModal()
   const { enqueue } = useAchievementQueue()
+  const { user, isLoading, error, setUser, refetchUser } = useUserContext()
+
+  const isInitialized = useRef(false)
+  const prevCoinsRef = useRef<number | null>(null)
+  const pendingClicksRef = useRef(0)
+  const containerRef = useRef<View>(null)
 
   const [stats, setStats] = useState<LocalStats>({ localClicks: 0, localCoins: 0 })
 
@@ -111,17 +116,27 @@ export default function HomeScreen() {
     }
   })
 
-  const increment = useCallback(async () => {
-    pulse()
+  const increment = useCallback(async (event: GestureResponderEvent) => {
+    const { locationX, locationY } = event.nativeEvent
+
     pendingClicksRef.current += 1
+
+    containerRef.current?.measure((_x, _y, _w, _h, pageX, pageY) => {
+      spawnNumber(
+        pageX + locationX,
+        pageY + locationY - 20,
+        `+${user?.clickPower ?? 1}`
+      )
+    })
 
     setStats((prev) => ({
       localClicks: prev.localClicks + 1,
       localCoins: prev.localCoins + (user?.clickPower ?? 1),
     }))
 
+    pulse()
     registerClick()
-  }, [pulse, registerClick, user?.clickPower])
+  }, [pulse, registerClick, user?.clickPower, spawnNumber])
 
   useEffect(() => {
     if (!user) return
@@ -207,16 +222,20 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-        <TouchableOpacity
-          style={styles.button}
-          onPressIn={increment}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.buttonEmoji}>👆</Text>
-          <Text style={styles.buttonText}>Нажми меня</Text>
-        </TouchableOpacity>
-      </Animated.View>
+      <View ref={containerRef}>
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <TouchableOpacity
+            style={styles.button}
+            onPressIn={increment}
+            activeOpacity={1}
+          >
+            <Text style={styles.buttonEmoji}>👆</Text>
+            <Text style={styles.buttonText}>Нажми меня</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+
+      <FloatingNumbers numbers={floatingNumbers} />
     </View>
   )
 }
@@ -295,6 +314,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
     backgroundColor: '#FAF8FF',
     paddingHorizontal: 24,
   },
