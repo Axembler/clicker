@@ -55,7 +55,7 @@ function validateTimestamps(timestamps) {
       return `timestamps[${i}] не является целым числом`
     }
 
-    if (ts > now + 1000) {
+    if (ts > now + 10000) {
       return 'Клик из будущего'
     }
 

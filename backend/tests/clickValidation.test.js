@@ -199,10 +199,10 @@ describe('validateTimestamps — граничные случаи', () => {
     expect(result).toMatch(/не отсортированы по возрастанию/)
   })
 
-  test('timestamp ровно на границе будущего (now+1000) не вызывает ошибку', () => {
+  test('timestamp ровно на границе будущего (now+10000) не вызывает ошибку', () => {
     const now = Date.now()
-    // now+999 — допустимо
-    const result = validateTimestamps([now + 999])
+    // now+9999 — допустимо
+    const result = validateTimestamps([now + 9999])
     expect(result).toBeNull()
   })
   test('массив из ровно 250 человекоподобных кликов проходит валидацию', () => {
