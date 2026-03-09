@@ -38,6 +38,8 @@ const ErrorView = memo(({ message }: { message: string }) => (
 export default function HomeScreen() {
   const isInitialized = useRef(false)
   const prevCoinsRef = useRef<number | null>(null)
+  const pendingClicksRef = useRef(0)
+  
   const { user, isLoading, error, setUser, refetchUser } = useUserContext()
   const { signOut } = useAuth()
   const { showModal, hideModal } = useModal()
@@ -72,27 +74,36 @@ export default function HomeScreen() {
   }
 
   const { registerClick } = useClickBatcher(async (timestamps) => {
+    const batchSize = timestamps.length
+    const clickPower = user?.clickPower ?? 1
+
     const { coins, clicks } = await incrementCounter(timestamps)
 
-    setStats({ localClicks: clicks, localCoins: coins })
+    pendingClicksRef.current = Math.max(0, pendingClicksRef.current - batchSize)
+
+    setStats({
+      localClicks: clicks + pendingClicksRef.current,
+      localCoins: coins + pendingClicksRef.current * clickPower,
+    })
 
     setUser((prev) => prev ? { ...prev, coins } : null)
+    prevCoinsRef.current = coins
 
     const { newAchievements } = await checkAchievements()
 
     if (newAchievements.length > 0) {
       enqueue(newAchievements)
-
       await refetchUser()
     }
   })
 
   const increment = useCallback(async () => {
     pulse()
+    pendingClicksRef.current += 1
 
     setStats((prev) => ({
       localClicks: prev.localClicks + 1,
-      localCoins: prev.localCoins + (user?.clickPower ?? 1)
+      localCoins: prev.localCoins + (user?.clickPower ?? 1),
     }))
 
     registerClick()
@@ -104,18 +115,17 @@ export default function HomeScreen() {
     // Первичная инициализация
     if (!isInitialized.current) {
       setStats({ localClicks: user.clicks, localCoins: user.coins })
-
       isInitialized.current = true
-
       prevCoinsRef.current = user.coins
-
       return
     }
 
     // Если coins изменились извне
     if (prevCoinsRef.current !== user.coins) {
-      setStats(prev => ({ ...prev, localCoins: user.coins }))
-
+      setStats((prev) => ({
+        ...prev,
+        localCoins: user.coins + pendingClicksRef.current * (user.clickPower ?? 1),
+      }))
       prevCoinsRef.current = user.coins
     }
   }, [user])
