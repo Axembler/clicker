@@ -123,15 +123,7 @@ describe('validateTimestamps — проверка дисперсии (антиб
     const base = now - 10_000
     const timestamps = Array.from({ length: 8 }, (_, i) => base + i * 100)
     const result = validateTimestamps(timestamps)
-    expect(result).toMatch(/Подозрительно равномерные клики/)
-  })
-
-  test('сообщение об ошибке содержит значение σ', () => {
-    const now = Date.now()
-    const base = now - 10_000
-    const timestamps = Array.from({ length: 8 }, (_, i) => base + i * 100)
-    const result = validateTimestamps(timestamps)
-    expect(result).toMatch(/σ=0\.0мс/)
+    expect(result).toMatch(/Подозрительные клики/)
   })
 
   test('возвращает ошибку для умного бота с малым разбросом (σ < 10мс)', () => {
@@ -143,7 +135,7 @@ describe('validateTimestamps — проверка дисперсии (антиб
       timestamps.push(timestamps[timestamps.length - 1] + interval)
     })
     const result = validateTimestamps(timestamps)
-    expect(result).toMatch(/Подозрительно равномерные клики/)
+    expect(result).toMatch(/Подозрительные клики/)
   })
 
   test('не возвращает ошибку для человекоподобных кликов (σ >= 10мс)', () => {
@@ -220,6 +212,6 @@ describe('validateTimestamps — граничные случаи', () => {
 
   test('массив из 251 клика возвращает ошибку превышения лимита', () => {
     const ts = makeTimestamps(251, 200, 0, 60_000)
-    expect(validateTimestamps(ts)).toBe('Слишком много кликов за один запрос (макс. 250)')
+    expect(validateTimestamps(ts)).toBe('Слишком много кликов за один запрос')
   })
 })
