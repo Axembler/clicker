@@ -16,6 +16,8 @@ import { SignOutModal } from '@/components/SignOutModal'
 import { useModal } from '@/context/modal-context'
 import { useAchievementQueue } from '@/hooks/use-achievement-queue'
 import { checkAchievements } from '@/services/achievements'
+import { useNotification } from '@/context/notification-context'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 type LocalStats = {
   localClicks: number
@@ -39,6 +41,7 @@ export default function HomeScreen() {
   const isInitialized = useRef(false)
   const prevCoinsRef = useRef<number | null>(null)
   const pendingClicksRef = useRef(0)
+  const { notify } = useNotification()
   
   const { user, isLoading, error, setUser, refetchUser } = useUserContext()
   const { signOut } = useAuth()
@@ -77,23 +80,34 @@ export default function HomeScreen() {
     const batchSize = timestamps.length
     const clickPower = user?.clickPower ?? 1
 
-    const { coins, clicks } = await incrementCounter(timestamps)
+    try {
+      const { coins, clicks } = await incrementCounter(timestamps)
 
-    pendingClicksRef.current = Math.max(0, pendingClicksRef.current - batchSize)
+      pendingClicksRef.current = Math.max(0, pendingClicksRef.current - batchSize)
 
-    setStats({
-      localClicks: clicks + pendingClicksRef.current,
-      localCoins: coins + pendingClicksRef.current * clickPower,
-    })
+      setStats({
+        localClicks: clicks + pendingClicksRef.current,
+        localCoins: coins + pendingClicksRef.current * clickPower,
+      })
 
-    setUser((prev) => prev ? { ...prev, coins } : null)
-    prevCoinsRef.current = coins
+      setUser((prev) => prev ? { ...prev, coins } : null)
+      prevCoinsRef.current = coins
 
-    const { newAchievements } = await checkAchievements()
+      const { newAchievements } = await checkAchievements()
 
-    if (newAchievements.length > 0) {
-      enqueue(newAchievements)
-      await refetchUser()
+      if (newAchievements.length > 0) {
+        enqueue(newAchievements)
+        await refetchUser()
+      }
+    } catch (error) {
+      pendingClicksRef.current = Math.max(0, pendingClicksRef.current - batchSize)
+
+      setStats({
+        localClicks: (user?.clicks ?? 0) + pendingClicksRef.current,
+        localCoins: (user?.coins ?? 0) + pendingClicksRef.current * clickPower,
+      })
+
+      notify('error', getErrorMessage(error))
     }
   })
 

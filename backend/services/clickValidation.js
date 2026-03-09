@@ -43,7 +43,7 @@ function validateTimestamps(timestamps) {
   }
 
   if (timestamps.length > MAX_TIMESTAMPS) {
-    return `Слишком много кликов за один запрос (макс. ${MAX_TIMESTAMPS})`
+    return 'Слишком много кликов за один запрос'
   }
 
   const now = Date.now()
@@ -56,11 +56,11 @@ function validateTimestamps(timestamps) {
     }
 
     if (ts > now + 1000) {
-      return `timestamps[${i}] из будущего`
+      return 'Клик из будущего'
     }
 
     if (now - ts > MAX_TIMESTAMP_AGE_MS) {
-      return `timestamps[${i}] слишком старый`
+      return 'Клик слишком старый'
     }
 
     if (i > 0) {
@@ -71,7 +71,7 @@ function validateTimestamps(timestamps) {
       }
 
       if (interval < MIN_CLICK_INTERVAL_MS) {
-        return `Слишком быстрые клики: интервал ${interval}мс (мин. ${MIN_CLICK_INTERVAL_MS}мс)`
+        return 'Слишком быстрые клики'
       }
     }
   }
@@ -81,7 +81,7 @@ function validateTimestamps(timestamps) {
     const σ = standardDeviation(intervals)
 
     if (σ < MIN_INTERVAL_STD_DEV_MS) {
-      return `Подозрительно равномерные клики (σ=${σ.toFixed(1)}мс)`
+      return 'Подозрительные клики'
     }
   }
 
