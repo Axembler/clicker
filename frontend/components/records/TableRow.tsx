@@ -5,7 +5,7 @@ import { formatNumber } from "@/helpers/formatNumber"
 export interface RecordData {
   id: string
   username: string
-  clicks: number
+  totalClicks: number
   totalCoins: number
 }
 
@@ -32,7 +32,7 @@ export const TableRow = memo(({ item, index, }: { item: RecordData; index: numbe
 
       <View style={styles.colStat}>
         <Text style={[styles.statValueCell, isTop3 && styles.statValueCellTop3]}>
-          {formatNumber(item.clicks)}
+          {formatNumber(item.totalClicks)}
         </Text>
       </View>
 

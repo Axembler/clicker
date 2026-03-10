@@ -7,10 +7,13 @@ import {
   ActivityIndicator,
   RefreshControl,
   DimensionValue,
+  TouchableOpacity,
 } from 'react-native'
 import { Achievement } from '@/types/achievements'
-import { useAchievements } from '@/hooks/use-acvievements'
+import { useAchievements } from '@/hooks/use-achievements'
 import { formatDate } from '@/helpers/formatDate'
+import { usePrestige } from '@/hooks/use-prestige'
+import { formatNumber } from '@/helpers/formatNumber'
 
 interface AchievementCardProps {
   achievement: Achievement
@@ -18,6 +21,7 @@ interface AchievementCardProps {
 
 export default function Achievements() {
   const { data, isLoading, isRefreshing, sort, onRefresh } = useAchievements()
+  const { openPrestigeModal } = usePrestige()
 
   const isInitialLoading = isLoading && !data
 
@@ -48,9 +52,20 @@ export default function Achievements() {
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.headerTitle}>Достижения</Text>
-            <Text style={styles.headerSubtitle}>
-              {data ? `${data.unlocked} / ${data.total} открыто` : '...'}
-            </Text>
+
+            {data && data.unlocked === data.total ? (
+              <TouchableOpacity
+                style={styles.allUnlockedButton}
+                onPress={openPrestigeModal}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.allUnlockedButtonText}>🎉 Престиж!</Text>
+              </TouchableOpacity>
+            ) : (
+              <Text style={styles.headerSubtitle}>
+                {data ? `${data.unlocked} / ${data.total} открыто` : '...'}
+              </Text>
+            )}
           </View>
 
           <View style={styles.progressBadge}>
@@ -120,7 +135,7 @@ const AchievementCard = memo(({ achievement }: AchievementCardProps) => {
 
           <View style={[styles.rewardBadge, unlocked && styles.rewardBadgeUnlocked]}>
             <Text style={[styles.rewardText, unlocked && styles.rewardTextUnlocked]}>
-              🪙 {reward.coins}
+              🪙 {formatNumber(reward.coins)}
             </Text>
           </View>
         </View>
@@ -188,6 +203,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
     marginTop: 2,
+  },
+  allUnlockedButton: {
+    marginTop: 6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignSelf: 'flex-start',
+    shadowColor: '#A78BFA',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  allUnlockedButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#7C3AED',
   },
 
   progressBadge: {
@@ -299,6 +332,7 @@ const styles = StyleSheet.create({
   },
 
   rewardBadge: {
+    width: 80,
     backgroundColor: '#F3F4F6',
     borderRadius: 10,
     paddingHorizontal: 8,

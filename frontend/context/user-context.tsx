@@ -18,6 +18,7 @@ interface User {
   items: UserItem[]
   lastOnline: string
   createdAt: string
+  prestige: number
 }
 
 interface UserContextType {

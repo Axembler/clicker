@@ -1,6 +1,5 @@
 import { MyRankCard, StatsRow, TableHeader, TableRow } from '@/components/records'
 import { RecordData } from '@/components/records/TableRow'
-import { ErrorBanner } from '@/components/ui/ErrorBanner'
 import { formatNumber } from '@/helpers/formatNumber'
 import { useRecords } from '@/hooks/use-records'
 import React, { useCallback, useMemo } from 'react'
@@ -30,7 +29,7 @@ export default function RecordsScreen() {
     () =>
       (data ?? []).reduce(
         (acc, r) => ({
-          totalClicks: acc.totalClicks + (r.clicks || 0),
+          totalClicks: acc.totalClicks + (r.totalClicks || 0),
           totalCoins: acc.totalCoins + (r.totalCoins || 0),
         }),
         { totalClicks: 0, totalCoins: 0 }

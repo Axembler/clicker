@@ -3,27 +3,27 @@ import { apiClient } from "@/utils/apiClient"
 type SortField = 'clicks' | 'totalCoins'
 
 type RecordEntry = {
-  rank:       number
-  id:         string
-  username:   string
-  clicks:     number
+  rank: number
+  id: string
+  username: string
+  totalClicks: number
   totalCoins: number
 }
 
 type RecordsData = {
   success:  boolean
   sortedBy: SortField
-  total:    number
+  total: number
   records:  RecordEntry[]
   message?: string
 }
 
 type UserRecordData = {
   success: boolean
-  rank:    number
+  rank: number
   user: {
-    username:   string
-    clicks:     number
+    username: string
+    totalClicks: number
     totalCoins: number
   }
 }

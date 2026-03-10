@@ -4,21 +4,21 @@ import { getErrorMessage } from "@/utils/getErrorMessage"
 import { useFocusEffect } from "expo-router"
 import { useCallback, useEffect, useState } from "react"
 
-type SortField = 'clicks' | 'totalCoins'
+type SortField = 'totalClicks' | 'totalCoins'
 
 type RecordsData = {
-  rank:       number
-  id:         string
-  username:   string
-  clicks:     number
+  rank: number
+  id: string
+  username: string
+  totalClicks: number
   totalCoins: number
 }
 
 type UserRecordData = {
   rank: number
   user: {
-    username:   string
-    clicks:     number
+    username: string
+    totalClicks: number
     totalCoins: number
   }
 }
@@ -28,7 +28,7 @@ export function useRecords() {
   
   const [data, setData] = useState<RecordsData[]>([])
   const [myRank, setMyRank] = useState<UserRecordData | null>(null)
-  const [sortField, setSortField]  = useState<SortField>('clicks')
+  const [sortField, setSortField]  = useState<SortField>('totalClicks')
   const [isLoading, setIsLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)

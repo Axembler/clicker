@@ -4,6 +4,11 @@ import { getErrorMessage } from "@/utils/getErrorMessage"
 import { useFocusEffect } from "expo-router"
 import { useCallback, useEffect, useState } from "react"
 
+function sortByPrice(arr: ItemData[]): ItemData[] {
+  return [...arr].sort((a, b) => a.price - b.price)
+}
+
+
 export function useShop() {
   const { notify } = useNotification()
 
@@ -49,6 +54,7 @@ export function useShop() {
     isLoading,
     refreshing,
     error,
-    refresh
+    refresh,
+    sort: sortByPrice
   }
 }

@@ -1,4 +1,5 @@
 const User = require('../models/User')
+const { calcPrestigeMultiplier } = require('../services/expressions')
 
 const MAX_OFFLINE_HOURS = 8
 const MIN_OFFLINE_SECONDS = 4
@@ -40,7 +41,7 @@ const passiveIncome = async (req, res, next) => {
       if (diffSeconds >= MIN_OFFLINE_SECONDS) {
         const maxSeconds = MAX_OFFLINE_HOURS * 3600
         const effectiveSeconds = Math.min(diffSeconds, maxSeconds)
-        const earned = Math.floor(user.passiveIncome * effectiveSeconds)
+        const earned = Math.floor(user.passiveIncome * calcPrestigeMultiplier(user.prestige) * effectiveSeconds)
 
         if (earned > 0) {
           user.coins += earned

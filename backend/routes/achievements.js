@@ -2,8 +2,10 @@ const express = require('express')
 const router = express.Router()
 const Achievement = require('../models/Achievement')
 const User = require('../models/User')
-const { grantAchievements } = require('../services/achievementService')
+const { grantAchievements, PRESTIGE_FIELDS } = require('../services/achievementService')
 const auth = require('../middleware/auth')
+const { calcPrestigeMultiplier } = require('../services/expressions')
+const { formatNumber } = require('../utils/formatNumber')
 
 /**
  * GET /achievements
@@ -20,15 +22,33 @@ router.get('/', auth, async (req, res) => {
       return res.status(404).json({ error: 'Пользователь не найден' })
     }
 
+    const multiplier = calcPrestigeMultiplier(user.prestige ?? 0)
+
     const unlockedMap = new Map(
       user.achievements.map(a => [a._id.toString(), a])
     )
 
     const achievementsWithStatus = allAchievements.map(achievement => {
       const id = achievement._id.toString()
+      const isCoinBased = PRESTIGE_FIELDS.has(achievement.condition.field)
+
+      const scaledValue = isCoinBased
+        ? Math.round(achievement.condition.value * multiplier)
+        : achievement.condition.value
 
       return {
         ...achievement,
+        description: isCoinBased
+          ? `Накопить ${formatNumber(scaledValue)} монет`
+          : achievement.description,
+        condition: {
+          ...achievement.condition,
+          value: scaledValue
+        },
+        reward: {
+          ...achievement.reward,
+          coins: Math.round(achievement.reward.coins * multiplier)
+        },
         unlocked: unlockedMap.has(id),
         unlockedAt: unlockedMap.get(id)?.unlockedAt || null
       }
@@ -38,6 +58,7 @@ router.get('/', auth, async (req, res) => {
       success: true,
       total: allAchievements.length,
       unlocked: unlockedMap.size,
+      prestige: user.prestige ?? 0,
       achievements: achievementsWithStatus
     })
 
@@ -60,16 +81,31 @@ router.post('/check', auth, async (req, res) => {
       return res.status(404).json({ error: 'Пользователь не найден' })
     }
 
+    const multiplier = calcPrestigeMultiplier(user.prestige ?? 0)
+
     const newAchievements = await grantAchievements(user)
 
     res.json({
       success: true,
-      newAchievements: newAchievements.map(a => ({
-        _id: a._id,
-        title: a.title,
-        description: a.description,
-        reward: a.reward
-      })),
+      newAchievements: newAchievements.map(a => {
+        const isCoinBased = PRESTIGE_FIELDS.has(a.condition.field)
+
+        const scaledValue = isCoinBased
+          ? Math.round(a.condition.value * multiplier)
+          : a.condition.value
+
+        return {
+          _id: a._id,
+          title: a.title,
+          description: isCoinBased
+            ? `Накопить ${formatNumber(scaledValue)} монет`
+            : a.description,
+          reward: {
+            ...a.reward,
+            coins: Math.round(a.reward.coins * multiplier)
+          }
+        }
+      }),
       hasNew: newAchievements.length > 0
     })
 

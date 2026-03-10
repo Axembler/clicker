@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  totalClicks: {
+    type: Number,
+    default: 0,
+  },
   clickPower: {
     type: Number,
     default: 1,
@@ -57,13 +61,24 @@ const userSchema = new mongoose.Schema({
   achievements: {
     type: [userAchievementSchema],
     default: []
+  },
+  prestige: {
+    type: Number,
+    default: 0
   }
 }, {
   collection: 'users'
 })
 
+userSchema.virtual('prestigeMultiplier').get(function () {
+  return Math.max(1, this.prestige ** 2 * (this.prestige + 1))
+})
+
+userSchema.set('toJSON', { virtuals: true })
+userSchema.set('toObject', { virtuals: true })
+
 // Индексы для быстрой сортировки по рекордам
-userSchema.index({ clicks: -1 })
+userSchema.index({ totalClicks: -1 })
 userSchema.index({ totalCoins: -1 })
 
 const User = mongoose.model('User', userSchema)

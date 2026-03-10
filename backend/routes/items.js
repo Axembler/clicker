@@ -3,12 +3,25 @@ const router = express.Router()
 const User = require('../models/User')
 const Item = require('../models/Item')
 const auth = require('../middleware/auth')
+const { calcPrestigeMultiplier } = require('../services/expressions')
 
-// Получить все предметы из магазина
+// Получить все предметы с ценами от престижа
 router.get('/', auth, async (req, res) => {
   try {
+    const user = await User.findById(req.user.id)
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден' })
+    }
+
+    const multiplier = calcPrestigeMultiplier(user.prestige)
     const items = await Item.find().sort({ sortOrder: 1 })
-    res.json(items)
+
+    const adjustedItems = items.map(item => ({
+      ...item.toObject(),
+      price: Math.round(item.price * multiplier),
+    }))
+
+    res.json(adjustedItems)
   } catch (error) {
     res.status(500).json({ message: 'Ошибка сервера', error: error.message })
   }
@@ -19,22 +32,26 @@ router.post('/buy/:itemId', auth, async (req, res) => {
   try {
     const { itemId } = req.params
 
-    const item = await Item.findById(itemId)
+    const [item, user] = await Promise.all([
+      Item.findById(itemId),
+      User.findById(req.user.id),
+    ])
+
     if (!item) {
       return res.status(404).json({ message: 'Предмет не найден' })
     }
-
-    const user = await User.findById(req.user.id)
     if (!user) {
       return res.status(404).json({ message: 'Пользователь не найден' })
     }
 
-    if (user.coins < item.price) {
+    const multiplier = calcPrestigeMultiplier(user.prestige)
+    const adjustedPrice = Math.round(item.price * multiplier)
+
+    if (user.coins < adjustedPrice) {
       return res.status(400).json({ message: 'Недостаточно монет' })
     }
 
     const alreadyOwned = user.items.some(i => i._id.toString() === itemId)
-
     if (alreadyOwned) {
       return res.status(400).json({ message: 'Предмет уже куплен' })
     }
@@ -43,22 +60,22 @@ router.post('/buy/:itemId', auth, async (req, res) => {
       req.user.id,
       {
         $inc: {
-          coins: -item.price,
-          clickPower: +item.clickPowerBonus,
-          passiveIncome: +item.passiveIncomeBonus,
+          coins: -adjustedPrice,
+          clickPower: item.clickPowerBonus,
+          passiveIncome: item.passiveIncomeBonus,
         },
         $push: {
           items: {
             _id: item._id,
-            name: item.name
-          }
-        }
+            name: item.name,
+          },
+        },
       },
       { returnDocument: 'after' }
     )
 
     res.json({
-      message: `Предмет "${item.name}" успешно куплен`,
+      message: `Предмет "${item.name}" успешно куплен за ${adjustedPrice}`,
       coins: updatedUser.coins,
       clickPower: updatedUser.clickPower,
       passiveIncome: updatedUser.passiveIncome,

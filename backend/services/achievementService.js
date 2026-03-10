@@ -1,33 +1,39 @@
 const Achievement = require('../models/Achievement')
+const { calcPrestigeMultiplier } = require('../services/expressions')
+
+// Поля, которые масштабируются престижем
+const PRESTIGE_FIELDS = new Set(['coins'])
 
 /**
  * Проверяет одно условие достижения
  */
-const checkCondition = (user, condition) => {
+const checkCondition = (user, condition, prestigeMultiplier = 1) => {
   const { field, operator, value } = condition
 
   const userValue = user[field]
 
   if (userValue === undefined || userValue === null) return false
 
+  const effectiveValue = PRESTIGE_FIELDS.has(field)
+    ? value * prestigeMultiplier
+    : value
+
   switch (operator) {
     case 'gte':
-      return userValue >= value
+      return userValue >= effectiveValue
 
     case 'lte':
-      return userValue <= value
+      return userValue <= effectiveValue
 
     case 'eq':
-      return userValue === value
+      return userValue === effectiveValue
 
     case 'length_gte':
       if (!Array.isArray(userValue)) return false
-
-      return userValue.length >= value
+      return userValue.length >= effectiveValue
 
     default:
       console.warn(`Неизвестный оператор: ${operator}`)
-
       return false
   }
 }
@@ -36,21 +42,20 @@ const checkCondition = (user, condition) => {
  * Проверяет все достижения для пользователя
  * Возвращает список новых разблокированных достижений
  */
-const checkAchievements = async (user) => {
+const checkAchievements = async (user, prestigeMultiplier = 1) => {
   try {
     const allAchievements = await Achievement.find({})
 
-    // Ключи уже полученных достижений пользователя
-    const unlockedAchievements = new Set(user.achievements.map(a => a._id.toString()))
+    const unlockedAchievements = new Set(
+      user.achievements.map(a => a._id.toString())
+    )
 
     const newlyUnlocked = []
 
     for (const achievement of allAchievements) {
-      // Пропускаем уже полученные
       if (unlockedAchievements.has(achievement._id.toString())) continue
 
-      // Проверяем условие
-      if (checkCondition(user, achievement.condition)) {
+      if (checkCondition(user, achievement.condition, prestigeMultiplier)) {
         newlyUnlocked.push(achievement)
       }
     }
@@ -59,16 +64,16 @@ const checkAchievements = async (user) => {
 
   } catch (error) {
     console.error('Ошибка при проверке достижений:', error)
-
     throw error
   }
 }
 
 /**
- *  Выдает новые достижения пользователю и начисляет награду
+ * Выдает новые достижения пользователю и начисляет награду
  */
 const grantAchievements = async (user) => {
-  const newlyUnlocked = await checkAchievements(user)
+  const prestigeMultiplier = calcPrestigeMultiplier(user.prestige)
+  const newlyUnlocked = await checkAchievements(user, prestigeMultiplier)
 
   if (newlyUnlocked.length === 0) return []
 
@@ -81,7 +86,9 @@ const grantAchievements = async (user) => {
       title: achievement.title
     })
 
-    totalReward += achievement.reward?.coins || 0
+    const reward = achievement.reward?.coins || 0
+
+    totalReward += Math.floor(reward * prestigeMultiplier)
   }
 
   if (totalReward > 0) {
@@ -97,5 +104,6 @@ const grantAchievements = async (user) => {
 module.exports = {
   checkCondition,
   checkAchievements,
-  grantAchievements
+  grantAchievements,
+  PRESTIGE_FIELDS
 }

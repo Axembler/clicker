@@ -6,7 +6,7 @@ type MyRank = {
   rank: number
   user: {
     username: string
-    clicks: number
+    totalClicks: number
     totalCoins: number
   }
 }
@@ -26,7 +26,7 @@ export const MyRankCard = memo(({ myRank }: { myRank: MyRank }) => (
       <View style={styles.myRankStat}>
         <Text style={styles.myRankStatEmoji}>👆</Text>
         <Text style={styles.myRankStatValue}>
-          {formatNumber(myRank.user.clicks)}
+          {formatNumber(myRank.user.totalClicks)}
         </Text>
       </View>
       <View style={styles.myRankDivider} />

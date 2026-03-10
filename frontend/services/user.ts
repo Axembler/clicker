@@ -12,6 +12,7 @@ export interface UserData {
   items: string[]
   passiveEarned: number
   passiveSeconds: number
+  prestige: number
 }
 
 export interface UserItem {
@@ -20,6 +21,13 @@ export interface UserItem {
 }
 
 export type UserItems = UserItem[]
+
+export interface PrestigeResponse {
+  message: string
+  coins: number
+  clicks: number
+  prestige: number
+}
 
 
 export const getUser = async (): Promise<any> => {
@@ -46,6 +54,18 @@ export const getUserItems = async (): Promise<UserItems> => {
   }
 
   const data = await response.json()
+
+  return data
+}
+
+export const prestige = async (): Promise<PrestigeResponse> => {
+  const response = await apiClient('/user/prestige', {
+    method: 'POST',
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) throw new Error(data.message)
 
   return data
 }

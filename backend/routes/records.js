@@ -7,12 +7,12 @@ const auth = require('../middleware/auth')
 // Таблица рекордов
 router.get('/', auth, async (req, res) => {
   try {
-    const ALLOWED_SORT_FIELDS = ['clicks', 'totalCoins']
+    const ALLOWED_SORT_FIELDS = ['totalClicks', 'totalCoins']
     const MAX_LIMIT = 100
 
     const sortField = ALLOWED_SORT_FIELDS.includes(req.query.sort)
       ? req.query.sort
-      : 'clicks'
+      : 'totalClicks'
 
     const limit = Math.min(
       parseInt(req.query.limit) || 50,
@@ -22,15 +22,15 @@ router.get('/', auth, async (req, res) => {
     const records = await User.find()
       .sort({ [sortField]: -1 })
       .limit(limit)
-      .select('username clicks totalCoins')
+      .select('username totalClicks totalCoins')
       .lean()  // возвращает plain JS объект вместо Mongoose документа
 
     const recordsWithRank = records.map((user, index) => ({
       rank: index + 1,
       id: user._id,
       username: user.username,
-      clicks: user.clicks,
       totalCoins: user.totalCoins,
+      totalClicks: user.totalClicks
     }))
 
     return res.json({
@@ -64,7 +64,7 @@ router.get('/user', auth, async (req, res) => {
     }
 
     const rank = await User.countDocuments({
-      clicks: { $gt: user.clicks }
+      totalClicks: { $gt: user.totalClicks }
     }) + 1
 
     return res.json({
@@ -72,8 +72,9 @@ router.get('/user', auth, async (req, res) => {
       rank,
       user: {
         username:   user.username,
-        clicks:     user.clicks,
+        totalClicks:     user.totalClicks,
         totalCoins: user.totalCoins,
+        prestige: user.prestige
       },
     })
 

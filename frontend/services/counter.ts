@@ -13,10 +13,14 @@ export const incrementCounter = async (timestamps: number[]): Promise<CounterDat
   })
   
   const data = await response.json()
+
+  console.log(data)
   
   if (!response.ok) {
-    throw new Error(data?.error || data?.message || 'Ошибка сервера')
+    throw new Error(data?.message || 'Ошибка сервера')
   }
+
+  
 
   return data
 }

@@ -3,35 +3,41 @@ const router = express.Router()
 const User = require('../models/User')
 const auth = require('../middleware/auth')
 const { validateTimestamps } = require('../services/clickValidation')
+const { prestigeMultiplier } = require('../services/expressions')
 
 router.post('/increment', auth, async (req, res) => {
   try {
     const { timestamps } = req.body
 
-    const increment = timestamps.length
-
     const validationError = validateTimestamps(timestamps)
-    
+
     if (validationError) {
       return res.status(400).json({ message: validationError })
     }
 
+    const increment = timestamps.length
+
+    const coinsEarned = {
+      $multiply: ['$clickPower', increment, prestigeMultiplier]
+    }
+
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      [
-        {
-          $set: {
-            clicks: { $add: ['$clicks', increment] },
-            coins: { $add: ['$coins', { $multiply: ['$clickPower', increment] }] },
-            totalCoins: { $add: ['$totalCoins', { $multiply: ['$clickPower', increment] }] }
-          }
+      [{
+        $set: {
+          clicks:      { $add: ['$clicks', increment] },
+          totalClicks: { $add: ['$totalClicks', increment] },
+          coins:       { $add: ['$coins', coinsEarned] },
+          totalCoins:  { $add: ['$totalCoins', coinsEarned] }
         }
-      ],
+      }],
       {
         returnDocument: 'after',
         updatePipeline: true
       }
     )
+
+    
 
     if (!user) {
       return res.status(404).json({ message: 'Пользователь не найден' })
@@ -39,7 +45,8 @@ router.post('/increment', auth, async (req, res) => {
 
     res.json({ clicks: user.clicks, coins: user.coins })
   } catch (error) {
-    res.status(500).json({ message: 'Ошибка сервера', error: error.message })
+    console.log(error)
+    res.status(500).json({ message: 'Ошибка сервера' })
   }
 })
 

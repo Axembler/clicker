@@ -13,7 +13,7 @@ const achievementSchema = new mongoose.Schema({
     field: {
       type: String,
       required: true,
-      enum: ['clicks', 'coins', 'totalCoins', 'clickPower', 'passiveIncome', 'items']
+      enum: ['clicks', 'coins', 'clickPower', 'passiveIncome', 'items']
     },
     operator: {
       type: String,

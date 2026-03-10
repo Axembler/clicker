@@ -21,6 +21,7 @@ import { useNotification } from '@/context/notification-context'
 import { getErrorMessage } from '@/utils/getErrorMessage'
 import { useFloatingNumbers } from '@/hooks/use-floating-numbers'
 import { FloatingNumbers } from '@/components/FloatingNumbers'
+import { calcPrestigeMultiplier } from '@/utils/calcPrestigeMultiplier'
 
 type LocalStats = {
   localClicks: number
@@ -54,6 +55,9 @@ export default function HomeScreen() {
   const containerRef = useRef<View>(null)
 
   const [stats, setStats] = useState<LocalStats>({ localClicks: 0, localCoins: 0 })
+  
+  const clickPower = user?.clickPower ?? 1
+  const prestigeMultiplier = calcPrestigeMultiplier(user?.prestige ?? 0)
 
   const activeDots = useMemo(
     () => (stats.localClicks % 5 === 0 && stats.localClicks > 0 ? 5 : stats.localClicks % 5),
@@ -83,7 +87,6 @@ export default function HomeScreen() {
 
   const { registerClick } = useClickBatcher(async (timestamps) => {
     const batchSize = timestamps.length
-    const clickPower = user?.clickPower ?? 1
 
     try {
       const { coins, clicks } = await incrementCounter(timestamps)
@@ -92,16 +95,18 @@ export default function HomeScreen() {
 
       setStats({
         localClicks: clicks + pendingClicksRef.current,
-        localCoins: coins + pendingClicksRef.current * clickPower,
+        localCoins: coins + pendingClicksRef.current * clickPower * prestigeMultiplier,
       })
 
       setUser((prev) => prev ? { ...prev, coins } : null)
+
       prevCoinsRef.current = coins
 
       const { newAchievements } = await checkAchievements()
 
       if (newAchievements.length > 0) {
         enqueue(newAchievements)
+        
         await refetchUser()
       }
     } catch (error) {
@@ -109,7 +114,7 @@ export default function HomeScreen() {
 
       setStats({
         localClicks: (user?.clicks ?? 0) + pendingClicksRef.current,
-        localCoins: (user?.coins ?? 0) + pendingClicksRef.current * clickPower,
+        localCoins: (user?.coins ?? 0) + pendingClicksRef.current * clickPower * prestigeMultiplier,
       })
 
       notify('error', getErrorMessage(error))
@@ -125,18 +130,18 @@ export default function HomeScreen() {
       spawnNumber(
         pageX + locationX,
         pageY + locationY - 20,
-        `+${user?.clickPower ?? 1}`
+        `+${clickPower * prestigeMultiplier}`
       )
     })
 
     setStats((prev) => ({
       localClicks: prev.localClicks + 1,
-      localCoins: prev.localCoins + (user?.clickPower ?? 1),
+      localCoins: prev.localCoins + (clickPower * prestigeMultiplier),
     }))
 
     pulse()
     registerClick()
-  }, [pulse, registerClick, user?.clickPower, spawnNumber])
+  }, [pulse, registerClick, user?.clickPower, user?.prestige, spawnNumber])
 
   useEffect(() => {
     if (!user) return
@@ -153,7 +158,8 @@ export default function HomeScreen() {
     if (prevCoinsRef.current !== user.coins) {
       setStats((prev) => ({
         ...prev,
-        localCoins: user.coins + pendingClicksRef.current * (user.clickPower ?? 1),
+        localCoins: user.coins + pendingClicksRef.current * clickPower * prestigeMultiplier,
+        localClicks: user.clicks
       }))
       prevCoinsRef.current = user.coins
     }
@@ -172,27 +178,34 @@ export default function HomeScreen() {
         <Text style={styles.logoutText}>⚙️</Text>
       </TouchableOpacity>
 
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statEmoji}>⚡</Text>
-          <Text style={styles.statValue}>{user?.clickPower}</Text>
-          <Text style={styles.statLabel}>за клик</Text>
+      <View style={[styles.stats, user?.prestige !== 0 && { backgroundColor: '#f8edff'}]}>
+        {user?.prestige && <View style={styles.statPrestige}>
+          <Text style={styles.statValue}>⭐ Престиж {user?.prestige}</Text>
         </View>
+        }
 
-        <View style={styles.statDivider} />
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statEmoji}>⚡</Text>
+            <Text style={styles.statValue}>{formatNumber(clickPower * prestigeMultiplier)}</Text>
+            <Text style={styles.statLabel}>за клик</Text>
+          </View>
 
-        <View style={styles.statCard}>
-          <Text style={styles.statEmoji}>💰</Text>
-          <Text style={styles.statValue}>{user?.passiveIncome}</Text>
-          <Text style={styles.statLabel}>в секунду</Text>
-        </View>
+          <View style={styles.statDivider} />
 
-        <View style={styles.statDivider} />
+          <View style={styles.statCard}>
+            <Text style={styles.statEmoji}>💰</Text>
+            <Text style={styles.statValue}>{user?.passiveIncome}</Text>
+            <Text style={styles.statLabel}>в секунду</Text>
+          </View>
 
-        <View style={styles.statCard}>
-          <Text style={styles.statEmoji}>💰</Text>
-          <Text style={styles.statValue}>{formatNumber(stats.localCoins)}</Text>
-          <Text style={styles.statLabel}>баланс</Text>
+          <View style={styles.statDivider} />
+
+          <View style={styles.statCard}>
+            <Text style={styles.statEmoji}>💰</Text>
+            <Text style={styles.statValue}>{formatNumber(stats.localCoins)}</Text>
+            <Text style={styles.statLabel}>баланс</Text>
+          </View>
         </View>
       </View>
 
@@ -268,9 +281,7 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 18,
   },
-
-  statsRow: {
-    flexDirection: 'row',
+  stats: {
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 20,
@@ -282,11 +293,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
-    gap: 24,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20
   },
   statCard: {
     alignItems: 'center',
     gap: 1,
+  },
+  statPrestige: {
+    alignItems: 'center',
+    marginBottom: 12,
   },
   statEmoji: {
     fontSize: 18,
@@ -304,6 +323,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     fontWeight: '600',
   },
+  statDividerVertical: {
+    width: 60,
+    height: 1,
+    backgroundColor: '#EDE9FE',
+  },
   statDivider: {
     width: 1,
     height: 40,
@@ -317,6 +341,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     backgroundColor: '#FAF8FF',
     paddingHorizontal: 24,
+    paddingTop: 40,
   },
 
   circle: {

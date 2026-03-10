@@ -9,13 +9,15 @@ import { useShop } from '@/hooks/use-shop'
 import { useCallback, useMemo } from 'react'
 import { useNotification } from '@/context/notification-context'
 import { getErrorMessage } from '@/utils/getErrorMessage'
+import { formatNumber } from '@/helpers/formatNumber'
 
 export default function Shop() {
   const {
     data,
     isLoading,
     refreshing,
-    refresh
+    refresh,
+    sort
   } = useShop()
 
   const { refetchUser, user, setUser } = useUserContext()
@@ -78,7 +80,7 @@ export default function Shop() {
   const sortedData = useMemo(() => {
     if (!data) return []
 
-    return [...data].sort((a, b) => {
+    return sort(data).sort((a, b) => {
       const aOwned = isOwned(a) ? 1 : 0
       const bOwned = isOwned(b) ? 1 : 0
 
@@ -105,7 +107,7 @@ export default function Shop() {
             {isInitialLoading ? (
               <Text style={styles.balanceLoading}>...</Text>
             ) : coins !== null ? (
-              <Text style={styles.balanceAmount}>🪙 {coins}</Text>
+              <Text style={styles.balanceAmount}>🪙 {formatNumber(coins)}</Text>
             ) : (
               <Text style={styles.balanceError}>—</Text>
             )}
@@ -145,7 +147,7 @@ export default function Shop() {
 
                 <View style={styles.cardFooter}>
                   <Text style={[styles.price, owned && styles.textDisabled]}>
-                    🪙 {item.price}
+                    🪙 {formatNumber(item.price)}
                   </Text>
 
                   {owned ? (
@@ -228,11 +230,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     alignItems: 'center',
-    minWidth: 110,
+    justifyContent: 'center',
+    width: 130,
     borderWidth: 1,
     borderColor: '#E0D0FF',
   },
   balanceLabel: {
+    textAlign: 'center',
     fontSize: 11,
     color: '#9B6FD4',
     textTransform: 'uppercase',
@@ -241,16 +245,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   balanceAmount: {
+    textAlign: 'center',
+    width: '100%',
     fontSize: 18,
     fontWeight: '700',
+    flexWrap: 'nowrap',
     color: '#6A35C2',
   },
   balanceLoading: {
+    textAlign: 'center',
     fontSize: 18,
     fontWeight: '700',
     color: '#B39DDB',
   },
   balanceError: {
+    textAlign: 'center',
     fontSize: 18,
     fontWeight: '700',
     color: '#CCC',
@@ -301,13 +310,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   price: {
+    width: '75%',
     fontSize: 15,
     fontWeight: '700',
     color: '#2D7BF5',
   },
   addButton: {
-    width: 30,
-    height: 30,
+    width: '25%',
+    height: 24,
     borderRadius: 15,
     backgroundColor: '#2D7BF5',
     justifyContent: 'center',
