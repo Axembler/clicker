@@ -117,19 +117,19 @@ describe('validateTimestamps — проверка дисперсии (антиб
     expect(validateTimestamps(timestamps)).toBeNull()
   })
 
-  test('возвращает ошибку при ровно 8 кликах с подозрительно равными интервалами', () => {
+  test('возвращает ошибку при ровно 20 кликах с подозрительно равными интервалами', () => {
     // 8 кликов с интервалом ровно 100мс — σ=0, явный бот
     const now = Date.now()
     const base = now - 10_000
-    const timestamps = Array.from({ length: 8 }, (_, i) => base + i * 100)
+    const timestamps = Array.from({ length: 20 }, (_, i) => base + i * 100)
     const result = validateTimestamps(timestamps)
     expect(result).toMatch(/Подозрительные клики/)
   })
 
-  test('возвращает ошибку для умного бота с малым разбросом (σ < 10мс)', () => {
+  test('возвращает ошибку для умного бота с малым разбросом (σ < 5мс)', () => {
     // Интервалы: 100, 101, 99, 100, 102, 98, 100, 101 — σ ≈ 1.3мс
     const now = Date.now()
-    const intervals = [100, 101, 99, 100, 102, 98, 100, 101]
+    const intervals = [100, 101, 99, 100, 102, 98, 100, 101, 98, 100, 101, 100, 101, 99, 100, 102, 98, 100, 101, 98, 100, 101]
     const timestamps = [now - 15_000]
     intervals.forEach(interval => {
       timestamps.push(timestamps[timestamps.length - 1] + interval)

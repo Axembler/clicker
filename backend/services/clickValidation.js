@@ -1,11 +1,11 @@
-const MIN_CLICK_INTERVAL_MS = 7
+const MIN_CLICK_INTERVAL_MS = 5
 const MAX_TIMESTAMPS = 250
 const MAX_TIMESTAMP_AGE_MS = 60_000
 
 // Минимальное СКО интервалов
 const MIN_INTERVAL_STD_DEV_MS = 10
 // Минимальное количество кликов для проверки дисперсии
-const MIN_CLICKS_FOR_VARIANCE_CHECK = 8
+const MIN_CLICKS_FOR_VARIANCE_CHECK = 20
 
 /**
  * Среднее массива чисел
