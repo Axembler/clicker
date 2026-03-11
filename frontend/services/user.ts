@@ -94,11 +94,8 @@ export const sleep = async (): Promise<void> => {
 
   await SecureStore.setItemAsync('lastSleepAt', String(sleepAt))
 
-  try {
-    await apiClient('/user/sleep', {
-      method: 'POST',
-      body: JSON.stringify({ sleepAt })
-    })
-  } catch {
-  }
+  await apiClient('/user/sleep', {
+    method: 'POST',
+    body: JSON.stringify({ sleepAt })
+  })
 }

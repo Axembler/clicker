@@ -22,6 +22,7 @@ import { getErrorMessage } from '@/utils/getErrorMessage'
 import { useFloatingNumbers } from '@/hooks/use-floating-numbers'
 import { FloatingNumbers } from '@/components/FloatingNumbers'
 import { calcPrestigeMultiplier } from '@/utils/calcPrestigeMultiplier'
+import { ErrorBanner } from '@/components/ui/ErrorBanner'
 
 type LocalStats = {
   localClicks: number
@@ -32,12 +33,6 @@ const LoadingView = memo(() => (
   <View style={styles.loadingContainer}>
     <ActivityIndicator size="large" color="#A78BFA" />
     <Text style={styles.loadingText}>Загрузка...</Text>
-  </View>
-))
-
-const ErrorView = memo(({ message }: { message: string }) => (
-  <View style={styles.loadingContainer}>
-    <Text style={styles.loadingText}>{message}</Text>
   </View>
 ))
 
@@ -158,15 +153,14 @@ export default function HomeScreen() {
     if (prevCoinsRef.current !== user.coins) {
       setStats((prev) => ({
         ...prev,
-        localCoins: user.coins + pendingClicksRef.current * clickPower * prestigeMultiplier,
-        localClicks: user.clicks
+        localCoins: user.coins + pendingClicksRef.current * clickPower * prestigeMultiplier
       }))
       prevCoinsRef.current = user.coins
     }
   }, [user])
 
   if (isLoading) return <LoadingView />
-  if (error) return <ErrorView message={error} />
+  if (error) return <ErrorBanner message={error} onRetry={refetchUser} onSignOut={signOut} />
 
   return (
     <View style={styles.container}>
@@ -179,7 +173,7 @@ export default function HomeScreen() {
       </TouchableOpacity>
 
       <View style={[styles.stats, user?.prestige !== 0 && { backgroundColor: '#f8edff'}]}>
-        {user?.prestige && <View style={styles.statPrestige}>
+        {!!user?.prestige && <View style={styles.statPrestige}>
           <Text style={styles.statValue}>⭐ Престиж {user?.prestige}</Text>
         </View>
         }
@@ -215,38 +209,32 @@ export default function HomeScreen() {
       <Text style={styles.title}>Счетчик</Text>
       <Text style={styles.subtitle}>Нажимай и считай 🎯</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Всего нажатий</Text>
-        <Text
-          style={styles.number}
-          adjustsFontSizeToFit
-          numberOfLines={1}
-        >
-          {stats.localClicks}
-        </Text>
-
-        <View style={styles.dots}>
-          {[...Array(5)].map((_, i) => (
-            <View
-              key={i}
-              style={[styles.dot, { opacity: i < activeDots ? 1 : 0.2 }]}
-            />
-          ))}
-        </View>
-      </View>
-
-      <View ref={containerRef}>
-        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-          <TouchableOpacity
-            style={styles.button}
-            onPressIn={increment}
-            activeOpacity={1}
+      <TouchableOpacity
+        onPressIn={increment}
+        activeOpacity={1}
+        ref={containerRef}
+      >
+        <Animated.View style={[styles.card, { transform: [{ scale: scaleAnim }] }]}>
+          <Text style={styles.cardLabel}>Всего нажатий</Text>
+          
+          <Text
+            style={styles.number}
+            adjustsFontSizeToFit
+            numberOfLines={1}
           >
-            <Text style={styles.buttonEmoji}>👆</Text>
-            <Text style={styles.buttonText}>Нажми меня</Text>
-          </TouchableOpacity>
+            {stats.localClicks}
+          </Text>
+
+          <View style={styles.dots}>
+            {[...Array(5)].map((_, i) => (
+              <View
+                key={i}
+                style={[styles.dot, { opacity: i < activeDots ? 1 : 0.2 }]}
+              />
+            ))}
+          </View>
         </Animated.View>
-      </View>
+      </TouchableOpacity>
 
       <FloatingNumbers numbers={floatingNumbers} />
     </View>
@@ -276,7 +264,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDE9FE',
     justifyContent: 'center',
     alignItems: 'center',
-    opacity: 0.6,
+    opacity: 0.7,
   },
   logoutText: {
     fontSize: 18,
@@ -341,7 +329,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     backgroundColor: '#FAF8FF',
     paddingHorizontal: 24,
-    paddingTop: 40,
   },
 
   circle: {

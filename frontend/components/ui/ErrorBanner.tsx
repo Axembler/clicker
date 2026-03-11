@@ -1,18 +1,22 @@
 import { memo } from "react"
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
-export const ErrorBanner = memo(({ message, onRetry }: { message: string; onRetry: () => void }) => (
+export const ErrorBanner = memo(({ message, onRetry, onSignOut }: { message: string; onRetry: () => void; onSignOut: () => void }) => (
   <View style={styles.errorBanner}>
     <Text style={styles.errorText}>{message}</Text>
 
     <TouchableOpacity onPress={onRetry} style={styles.retryBtn} activeOpacity={0.75}>
-      <Text style={styles.retryBtnText}>Retry</Text>
+      <Text style={styles.retryBtnText}>Повторить</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity onPress={onSignOut} style={styles.signOutBtn} activeOpacity={0.75}>
+      <Text style={styles.signOutBtnText}>Выйти</Text>
     </TouchableOpacity>
   </View>
 ))
 
 const styles = StyleSheet.create({
-    errorBanner: {
+  errorBanner: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
@@ -37,6 +41,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   retryBtnText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  signOutBtn: {
+    backgroundColor: '#b644ef',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  signOutBtnText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: '700',
