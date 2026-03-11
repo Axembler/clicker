@@ -86,6 +86,10 @@ router.post('/prestige', auth, async (req, res) => {
 router.post('/wakeup', auth, passiveIncome, (req, res) => {
   const user = req.userDoc
 
+  if (!user) {
+    return res.status(404).json({ message: 'Пользователь не найден' })
+  }
+
   res.json({
     id: user._id,
     username: user.username,
