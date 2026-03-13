@@ -86,8 +86,8 @@ jobs:
         working-directory: ./frontend
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
-        run: eas update --branch production --message "OTA: $COMMIT_MSG"
-
+        run: |
+          eas update --branch production --message "OTA: $COMMIT_MSG"
 
   native-build:
     name: Native Build (Android)
