@@ -189,7 +189,7 @@ export default function HomeScreen() {
 
           <View style={styles.statCard}>
             <Text style={styles.statEmoji}>💰</Text>
-            <Text style={styles.statValue}>{user?.passiveIncome}</Text>
+            <Text style={styles.statValue}>{user ? formatNumber(user.passiveIncome * prestigeMultiplier) : "-"}</Text>
             <Text style={styles.statLabel}>в секунду</Text>
           </View>
 

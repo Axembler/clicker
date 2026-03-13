@@ -2,7 +2,7 @@
   "name": "drugs",
   "slug": "drugs",
   "main": "expo-router/entry",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "android": {
     "package": "com.payuk.drugs"
   },

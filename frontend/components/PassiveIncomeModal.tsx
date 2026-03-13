@@ -1,4 +1,5 @@
 import { useModal } from '@/context/modal-context'
+import { formatNumber } from '@/helpers/formatNumber'
 import { formatSeconds } from '@/helpers/formatSeconds'
 import { useAchievementQueue } from '@/hooks/use-achievement-queue'
 import { checkAchievements } from '@/services/achievements'
@@ -33,7 +34,7 @@ export const PassiveIncomeModal = ({ earned, seconds }: Props) => {
 
       <View style={styles.divider} />
 
-      <Text style={styles.earned}>+{earned} монет</Text>
+      <Text style={styles.earned}>+{formatNumber(earned)} монет</Text>
       <Text style={styles.time}>за {formatSeconds(seconds)}</Text>
 
       <TouchableOpacity style={styles.button} onPress={hideModalHandler} activeOpacity={0.8}>
