@@ -7,12 +7,12 @@ import { NotificationProvider } from '@/context/notification-context'
 import { useOTAUpdate } from '@/hooks/use-ota-update'
 import { LoadingBanner } from '@/components/ui/LoadingBanner'
 
-export const unstable_settings = {
-  anchor: '(tabs)'
-}
-
 export default function RootLayout() {
-  const { isUpdating } = useOTAUpdate()
+  const { isChecking, isUpdating } = useOTAUpdate()
+
+  if (isChecking) {
+    return <LoadingBanner message='Проверка обновлений...' />
+  }
 
   if (isUpdating) {
     return <LoadingBanner message='Загрузка обновления...' />
