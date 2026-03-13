@@ -1,3 +1,4 @@
+import { formatNumber } from '@/helpers/formatNumber'
 import { ItemData } from '@/services/items'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 
@@ -26,7 +27,7 @@ export function BuyItemModal({ item, onConfirm, onCancel, owned, notEnoughCoins 
 
         <View style={styles.divider} />
 
-        <Text style={styles.price}>🪙 {item.price}</Text>
+        <Text style={styles.price}>🪙 {formatNumber(item.price)}</Text>
 
         {notEnoughCoins && !owned && (
           <Text style={styles.notEnoughCoinsText}>

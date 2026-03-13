@@ -17,22 +17,19 @@ export const ErrorBanner = memo(({ message, onRetry, onSignOut }: { message: str
 
 const styles = StyleSheet.create({
   errorBanner: {
-    width: '100%',
-    flexDirection: 'row',
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'row',
     backgroundColor: '#FEE2E2',
     borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    padding: 16,
     gap: 8,
   },
   errorText: {
-    flex: 1,
     fontSize: 13,
-    color: '#B91C1C',
     fontWeight: '600',
+    color: '#d43b3b',
   },
   retryBtn: {
     backgroundColor: '#EF4444',
