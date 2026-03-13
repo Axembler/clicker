@@ -2,7 +2,7 @@ import { createContext, useContext, useCallback, ReactNode } from 'react'
 import { useAppLifecycle } from '@/hooks/use-app-lifecycle'
 import { useUserContext } from './user-context'
 import { useModal } from './modal-context'
-import { PassiveIncomeModal } from '@/components/PassiveIncomeModal'
+import { PassiveIncomeModal } from '@/components/modals/PassiveIncomeModal'
 
 const LifecycleContext = createContext({})
 

@@ -1,5 +1,5 @@
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { BuyItemModal } from '@/components/BuyItemModal'
+import { BuyItemModal } from '@/components/modals/BuyItemModal'
 import { useModal } from '@/context/modal-context'
 import { useUserContext } from '@/context/user-context'
 import { buyItem, ItemData } from '@/services/items'

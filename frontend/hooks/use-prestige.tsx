@@ -3,7 +3,7 @@ import { useModal } from '@/context/modal-context'
 import { useNotification } from '@/context/notification-context'
 import { prestige } from '@/services/user'
 import { getErrorMessage } from '@/utils/getErrorMessage'
-import { PrestigeModal } from '@/components/PrestigeModal'
+import { PrestigeModal } from '@/components/modals/PrestigeModal'
 import { router } from 'expo-router'
 
 export const usePrestige = () => {

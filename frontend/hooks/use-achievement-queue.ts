@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react'
-import { AchievementModal } from '@/components/AchievementModal'
+import { AchievementModal } from '@/components/modals/AchievementModal'
 import React from 'react'
 import { CheckedAchievement } from '@/types/achievements'
 import { useModal } from '@/context/modal-context'

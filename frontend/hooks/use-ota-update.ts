@@ -1,12 +1,11 @@
 import * as Updates from 'expo-updates'
 import { useEffect, useState } from 'react'
-import { Alert } from 'react-native'
 
 export function useOTAUpdate() {
   const [isUpdating, setIsUpdating] = useState(false)
 
   useEffect(() => {
-    async function checkUpdate() {
+    async function checkAndUpdate() {
       if (__DEV__) return
 
       try {
@@ -18,29 +17,14 @@ export function useOTAUpdate() {
 
         await Updates.fetchUpdateAsync()
 
-        setIsUpdating(false)
-
-        Alert.alert(
-          '🆕 Доступно обновление',
-          'Приложение будет перезапущено для применения обновлений',
-          [
-            {
-              text: 'Обновить сейчас',
-              onPress: async () => await Updates.reloadAsync(),
-            },
-            {
-              text: 'Позже',
-              style: 'cancel',
-            },
-          ]
-        )
+        await Updates.reloadAsync()
       } catch (error) {
         setIsUpdating(false)
-        console.error('OTA check failed:', error)
+        console.error('OTA update failed:', error)
       }
     }
 
-    checkUpdate()
+    checkAndUpdate()
   }, [])
 
   return { isUpdating }

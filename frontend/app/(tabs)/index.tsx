@@ -13,7 +13,7 @@ import { useUserContext } from '@/context/user-context'
 import { formatNumber } from '@/helpers/formatNumber'
 import { useClickBatcher } from '@/hooks/use-click-batcher'
 import { incrementCounter } from '@/services/counter'
-import { SignOutModal } from '@/components/SignOutModal'
+import { SignOutModal } from '@/components/modals/SignOutModal'
 import { useModal } from '@/context/modal-context'
 import { useAchievementQueue } from '@/hooks/use-achievement-queue'
 import { checkAchievements } from '@/services/achievements'
@@ -23,18 +23,12 @@ import { useFloatingNumbers } from '@/hooks/use-floating-numbers'
 import { FloatingNumbers } from '@/components/FloatingNumbers'
 import { calcPrestigeMultiplier } from '@/utils/calcPrestigeMultiplier'
 import { ErrorBanner } from '@/components/ui/ErrorBanner'
+import { LoadingBanner } from '@/components/ui/LoadingBanner'
 
 type LocalStats = {
   localClicks: number
   localCoins: number
 }
-
-const LoadingView = memo(() => (
-  <View style={styles.loadingContainer}>
-    <ActivityIndicator size="large" color="#A78BFA" />
-    <Text style={styles.loadingText}>Загрузка...</Text>
-  </View>
-))
 
 export default function HomeScreen() {
   const { notify } = useNotification()
@@ -159,7 +153,7 @@ export default function HomeScreen() {
     }
   }, [user])
 
-  if (isLoading) return <LoadingView />
+  if (isLoading) return <LoadingBanner />
   if (error) return <ErrorBanner message={error} onRetry={refetchUser} onSignOut={signOut} />
 
   return (
@@ -242,18 +236,6 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FAF8FF',
-    gap: 12,
-  },
-  loadingText: {
-    color: '#A78BFA',
-    fontSize: 16,
-  },
-
   logoutButton: {
     position: 'absolute',
     top: 36,
