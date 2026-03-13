@@ -6,6 +6,8 @@ import { AuthProvider } from '@/context/auth-context'
 import { NotificationProvider } from '@/context/notification-context'
 import { useOTAUpdate } from '@/hooks/use-ota-update'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
+import { useEffect } from 'react'
+import { apiUrl } from '@/utils/apiUrl'
 
 export const unstable_settings = {
   anchor: '(tabs)'
@@ -13,6 +15,10 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const { isUpdating } = useOTAUpdate()
+
+  useEffect(() => {
+    console.log('API URL:', apiUrl)
+  }, [])
 
   if (isUpdating) {
     return (
