@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - production
+    paths:
+      - 'frontend/**'
 
 jobs:
   check-changes:
@@ -24,17 +26,17 @@ jobs:
         with:
           filters: |
             native:
-              - 'ios/**'
-              - 'android/**'
-              - 'app.json'
-              - 'app.config.js'
-              - 'app.config.ts'
+              - 'frontend/ios/**'
+              - 'frontend/android/**'
+              - 'frontend/app.json'
+              - 'frontend/app.config.js'
+              - 'frontend/app.config.ts'
 
       - name: Check if dependencies changed in package.json
         id: pkg-check
         run: |
           PKG_CHANGED=false
-          if git diff HEAD~1 HEAD -- package.json | grep -qE '^\+.*"(dependencies|devDependencies)"'; then
+          if git diff HEAD~1 HEAD -- frontend/package.json | grep -qE '^\+.*"(dependencies|devDependencies)"'; then
             PKG_CHANGED=true
           fi
           echo "pkg_changed=$PKG_CHANGED" >> $GITHUB_OUTPUT
@@ -55,10 +57,9 @@ jobs:
           echo "Changed files:"
           echo "$CHANGED"
 
-          # ─── Анализ package.json через Python ────────────────────────
           PACKAGE_IS_NATIVE=false
 
-          if echo "$CHANGED" | grep -q "^package\.json$"; then
+          if echo "$CHANGED" | grep -q "^frontend/package\.json$"; then
             echo "📦 package.json изменился, анализ..."
 
             PACKAGE_IS_NATIVE=$(python3 << 'EOF'
@@ -66,7 +67,8 @@ jobs:
 
           def get_pkg(ref):
               result = subprocess.run(
-                  ["git", "show", f"{ref}:package.json"],
+                  ["git", "show", f"{ref}:frontend/package.json"],
+                  #                    ↑ добавили frontend/
                   capture_output=True, text=True
               )
               if result.returncode != 0:
@@ -75,16 +77,14 @@ jobs:
 
           old = get_pkg("HEAD~1")
           new = get_pkg("HEAD")
-
-          # Ключи, изменение которых требует пересборки
           NATIVE_KEYS = ["dependencies", "devDependencies", "peerDependencies"]
 
           for key in NATIVE_KEYS:
               if old.get(key) != new.get(key):
-                  print("true")   # нативное изменение
+                  print("true")
                   sys.exit(0)
 
-          print("false")  # только версия или другие поля — не нативное
+          print("false")
           EOF
             )
 
@@ -95,15 +95,13 @@ jobs:
             fi
           fi
 
-          # ─── Остальные нативные файлы (package.json исключен) ─────────
-          NATIVE_PATTERN="^(android/|ios/|package-lock\.json|yarn\.lock|app\.json|app\.config\.(js|ts)|eas\.json|Gemfile)"
+          NATIVE_PATTERN="^frontend/(android/|ios/|package-lock\.json|yarn\.lock|app\.json|app\.config\.(js|ts)|eas\.json|Gemfile)"
           
           if echo "$CHANGED" | grep -qE "$NATIVE_PATTERN" || [ "$PACKAGE_IS_NATIVE" = "true" ]; then
             echo "type=native" >> $GITHUB_OUTPUT
           else
             echo "type=js" >> $GITHUB_OUTPUT
           fi
-
 
   ota-update:
     name: OTA Update (JS only)
@@ -120,8 +118,10 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm ci
 
       - name: Setup EAS
@@ -131,6 +131,7 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Publish OTA update
+        working-directory: ./frontend
         run: eas update --branch production --message "OTA: ${{ github.event.head_commit.message }}"
 
   native-build:
@@ -148,8 +149,10 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm ci
 
       - name: Setup EAS
@@ -159,4 +162,5 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build Android
+        working-directory: ./frontend
         run: eas build --platform android --profile production --non-interactive
