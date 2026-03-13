@@ -1,12 +1,12 @@
 import { formatNumber } from '@/helpers/formatNumber'
-import { ItemData } from '@/services/items'
+import { ShopItemData } from '@/types/shop'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 
 interface BuyItemModalProps {
-  item: ItemData,
+  item: ShopItemData,
   owned: boolean,
   notEnoughCoins: boolean,
-  onConfirm: (item: ItemData) => void
+  onConfirm: (item: ShopItemData) => void
   onCancel: () => void
 }
 

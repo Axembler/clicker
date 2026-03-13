@@ -1,11 +1,7 @@
+import { CounterData, Timestamps } from "@/types/counter"
 import { apiClient } from "@/utils/apiClient"
 
-interface CounterData {
-  clicks: number
-  coins: number
-}
-
-export const incrementCounter = async (timestamps: number[]): Promise<CounterData> => {
+export const incrementCounter = async (timestamps: Timestamps): Promise<CounterData> => {
   const response = await apiClient('/counter/increment', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -14,13 +10,9 @@ export const incrementCounter = async (timestamps: number[]): Promise<CounterDat
   
   const data = await response.json()
 
-  console.log(data)
-  
   if (!response.ok) {
     throw new Error(data?.message || 'Ошибка сервера')
   }
-
-  
 
   return data
 }

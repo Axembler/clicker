@@ -1,18 +1,5 @@
+import { AuthCredentials, AuthResponse } from '@/types/auth'
 import { apiClient } from '@/utils/apiClient'
-
-export interface AuthCredentials {
-  username: string
-  password: string
-}
-
-export interface AuthResponse {
-  token: string
-  message: string | null
-  user: {
-    id: string
-    username: string
-  }
-}
 
 export const authService = {
   login: async (credentials: AuthCredentials): Promise<AuthResponse> => {

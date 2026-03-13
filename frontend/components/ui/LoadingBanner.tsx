@@ -1,11 +1,15 @@
 import { memo } from "react"
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native"
 
-export const LoadingBanner = memo(({ message } : { message?: string }) => (
+interface Props {
+  message?: string
+}
+
+export const LoadingBanner = memo(({ message = 'Загрузка...' }: Props) => (
   <View style={styles.loadingContainer}>
     <ActivityIndicator size="large" color="#A78BFA" />
 
-    <Text style={styles.loadingText}>{message ? message : 'Загрузка...'}</Text>
+    <Text style={styles.loadingText}>{message}</Text>
   </View>
 ))
 

@@ -1,32 +1,5 @@
+import { RecordsData, UserRecordData } from "@/types/records"
 import { apiClient } from "@/utils/apiClient"
-
-type SortField = 'clicks' | 'totalCoins'
-
-type RecordEntry = {
-  rank: number
-  id: string
-  username: string
-  totalClicks: number
-  totalCoins: number
-}
-
-type RecordsData = {
-  success:  boolean
-  sortedBy: SortField
-  total: number
-  records:  RecordEntry[]
-  message?: string
-}
-
-type UserRecordData = {
-  success: boolean
-  rank: number
-  user: {
-    username: string
-    totalClicks: number
-    totalCoins: number
-  }
-}
 
 export const getRecords = async (): Promise<RecordsData> => {
   const response = await apiClient('/records', {

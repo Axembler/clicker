@@ -1,18 +1,18 @@
 import { useNotification } from "@/context/notification-context"
-import { getItems, ItemData } from "@/services/items"
+import { getShopItems } from "@/services/items"
+import { ShopItemData } from "@/types/shop"
 import { getErrorMessage } from "@/utils/getErrorMessage"
 import { useFocusEffect } from "expo-router"
 import { useCallback, useEffect, useState } from "react"
 
-function sortByPrice(arr: ItemData[]): ItemData[] {
+function sortByPrice(arr: ShopItemData[]): ShopItemData[] {
   return [...arr].sort((a, b) => a.price - b.price)
 }
-
 
 export function useShop() {
   const { notify } = useNotification()
 
-  const [data, setData] = useState<ItemData[]>([])
+  const [data, setData] = useState<ShopItemData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,7 +22,7 @@ export function useShop() {
       isRefresh ? setRefreshing(true) : setIsLoading(true)
       setError(null)
 
-      const fetchedItems = await getItems()
+      const fetchedItems = await getShopItems()
 
       setData(fetchedItems)
     } catch (error) {

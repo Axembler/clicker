@@ -1,24 +1,9 @@
-import { MyRankCard, StatsRow, TableHeader, TableRow } from '@/components/records'
-import { RecordData } from '@/components/records/TableRow'
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native'
+import { useCallback, useMemo } from 'react'
+import { ItemSeparator, ListEmpty, MyRankCard, StatsRow, TableHeader, TableRow } from '@/components/records'
 import { formatNumber } from '@/helpers/formatNumber'
 import { useRecords } from '@/hooks/use-records'
-import React, { useCallback, useMemo } from 'react'
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native'
-
-const ItemSeparator = () => <View style={styles.rowSeparator} />
-
-const ListEmpty = () => (
-  <View style={styles.emptyContainer}>
-    <Text style={styles.emptyText}>Пусто</Text>
-  </View>
-)
+import { RecordEntry } from '@/types/records'
 
 export default function RecordsScreen() {
   const { data, myRank, isLoading, refreshing, refresh } = useRecords()
@@ -26,19 +11,17 @@ export default function RecordsScreen() {
   const isInitialLoading = isLoading && !data
 
   const { totalClicks, totalCoins } = useMemo(
-    () =>
-      (data ?? []).reduce(
-        (acc, r) => ({
-          totalClicks: acc.totalClicks + (r.totalClicks || 0),
-          totalCoins: acc.totalCoins + (r.totalCoins || 0),
-        }),
-        { totalClicks: 0, totalCoins: 0 }
-      ),
-    [data]
+    () => (data ?? []).reduce(
+      (acc, r) => ({
+        totalClicks: acc.totalClicks + (r.totalClicks || 0),
+        totalCoins: acc.totalCoins + (r.totalCoins || 0),
+      }),
+      { totalClicks: 0, totalCoins: 0 }
+    ), [data]
   )
 
   const renderItem = useCallback(
-    ({ item, index }: { item: RecordData; index: number }) => (
+    ({ item, index }: { item: RecordEntry; index: number }) => (
       <TableRow item={item} index={index} />
     ), []
   )
@@ -182,20 +165,5 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#EDE9FE',
     marginBottom: 8,
-  },
-  rowSeparator: {
-    height: 1,
-    backgroundColor: '#F5F3FF',
-    marginVertical: 2,
-  },
-
-  emptyContainer: {
-    paddingVertical: 32,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 15,
-    color: '#C4B5FD',
-    fontWeight: '600',
-  },
+  }
 })

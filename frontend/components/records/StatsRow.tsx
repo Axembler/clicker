@@ -1,7 +1,13 @@
 import { memo } from "react"
 import { StyleSheet, Text, View } from "react-native"
 
-export const StatsRow = memo(({ length, totalClicks, totalCoins }: { length: number; totalClicks: string, totalCoins: string }) => (
+interface Props {
+  length: number
+  totalClicks: string
+  totalCoins: string
+}
+
+export const StatsRow = memo(({ length, totalClicks, totalCoins }: Props) => (
   <View style={styles.statsRow}>
     <View style={styles.statCard}>
       <Text style={styles.statEmoji}>👥</Text>

@@ -1,11 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react'
-import {
-  Modal,
-  View,
-  Animated,
-  StyleSheet,
-  Pressable,
-} from 'react-native'
+import { Modal, View, Animated, StyleSheet, Pressable } from 'react-native'
 
 interface ModalOptions {
   closeOnBackdrop?: boolean
@@ -81,14 +75,10 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
         statusBarTranslucent
         onRequestClose={hideModal}
       >
-        {/* Затемнённый фон */}
         <Animated.View
           style={[
             styles.backdrop,
-            {
-              opacity: backdropOpacity,
-              backgroundColor: options.backdropColor,
-            },
+            { opacity: backdropOpacity, backgroundColor: options.backdropColor, },
           ]}
         >
           {options.closeOnBackdrop && (
@@ -96,7 +86,6 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
           )}
         </Animated.View>
 
-        {/* Контент — любая вёрстка снаружи */}
         <View style={styles.centeredView} pointerEvents="box-none">
           <Animated.View
             style={{

@@ -1,17 +1,9 @@
 import { memo } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import { formatNumber } from "@/helpers/formatNumber"
+import { UserRecordData } from "@/types/records"
 
-type MyRank = {
-  rank: number
-  user: {
-    username: string
-    totalClicks: number
-    totalCoins: number
-  }
-}
-
-export const MyRankCard = memo(({ myRank }: { myRank: MyRank }) => (
+export const MyRankCard = memo(({ myRank }: { myRank: UserRecordData }) => (
   <View style={styles.myRankCard}>
     <View style={styles.myRankLeft}>
       <Text style={styles.myRankBadge}>#{myRank.rank}</Text>

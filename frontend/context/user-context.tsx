@@ -1,32 +1,14 @@
+import { createContext, useContext, useState, useCallback, ReactNode, Dispatch, SetStateAction } from 'react'
 import { getUser } from '@/services/user'
+import { UserData } from '@/types/user'
 import { useFocusEffect } from 'expo-router'
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode, Dispatch, SetStateAction } from 'react'
-
-interface UserItem {
-  _id: string
-  name: string
-}
-
-interface User {
-  _id: string
-  username: string
-  clicks: number
-  clickPower: number
-  coins: number
-  totalCoins: number
-  passiveIncome: number
-  items: UserItem[]
-  lastOnline: string
-  createdAt: string
-  prestige: number
-}
 
 interface UserContextType {
-  user: User | null
+  user: UserData | null
   isLoading: boolean
   error: string | null
   refetchUser: () => Promise<void>
-  setUser: Dispatch<SetStateAction<User | null>>
+  setUser: Dispatch<SetStateAction<UserData | null>>
 }
 
 const UserContext = createContext<UserContextType>({
@@ -40,7 +22,7 @@ const UserContext = createContext<UserContextType>({
 export const useUserContext = () => useContext(UserContext)
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserData | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 

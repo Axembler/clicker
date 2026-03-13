@@ -1,17 +1,11 @@
 import { memo } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import { formatNumber } from "@/helpers/formatNumber"
-
-export interface RecordData {
-  id: string
-  username: string
-  totalClicks: number
-  totalCoins: number
-}
+import { RecordEntry } from "@/types/records"
 
 const MEDALS: Record<number, string> = { 0: '🥇', 1: '🥈', 2: '🥉' }
 
-export const TableRow = memo(({ item, index, }: { item: RecordData; index: number }) => {
+export const TableRow = memo(({ item, index, }: { item: RecordEntry; index: number }) => {
   const isTop3 = index < 3
 
   return (

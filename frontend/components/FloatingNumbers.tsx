@@ -16,6 +16,10 @@ interface Props {
   numbers: FloatingNumber[]
 }
 
+interface ItemProps {
+  item: FloatingNumber
+}
+
 const COLOR_THRESHOLDS: [number, string][] = [
   [25, '#ec5c8f'],
   [15, '#6ab6f0'],
@@ -32,10 +36,6 @@ const getColor = (value: number): string => {
     if (value >= threshold) return color
   }
   return DEFAULT_COLOR
-}
-
-interface ItemProps {
-  item: FloatingNumber
 }
 
 const FloatingNumberItem = memo(({ item }: ItemProps) => {

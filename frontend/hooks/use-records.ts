@@ -1,33 +1,15 @@
 import { useNotification } from "@/context/notification-context"
 import { getRecords, getUserRecord } from "@/services/records"
+import { RecordEntry, SortField, UserRecordData } from "@/types/records"
 import { getErrorMessage } from "@/utils/getErrorMessage"
 import { useFocusEffect } from "expo-router"
 import { useCallback, useEffect, useState } from "react"
 
-type SortField = 'totalClicks' | 'totalCoins'
-
-type RecordsData = {
-  rank: number
-  id: string
-  username: string
-  totalClicks: number
-  totalCoins: number
-}
-
-type UserRecordData = {
-  rank: number
-  user: {
-    username: string
-    totalClicks: number
-    totalCoins: number
-  }
-}
-
 export function useRecords() {
   const { notify } = useNotification()
   
-  const [data, setData] = useState<RecordsData[]>([])
-  const [myRank, setMyRank] = useState<UserRecordData | null>(null)
+  const [data, setData] = useState<RecordEntry[]>([])
+  const [myRank, setMyRank] = useState<UserRecordData>()
   const [sortField, setSortField]  = useState<SortField>('totalClicks')
   const [isLoading, setIsLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -51,6 +33,7 @@ export function useRecords() {
 
       if (userRecordData.success) {
         setMyRank({
+          success: userRecordData.success,
           rank: userRecordData.rank,
           user: userRecordData.user,
         })

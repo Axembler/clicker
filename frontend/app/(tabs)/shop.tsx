@@ -2,7 +2,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } 
 import { BuyItemModal } from '@/components/modals/BuyItemModal'
 import { useModal } from '@/context/modal-context'
 import { useUserContext } from '@/context/user-context'
-import { buyItem, ItemData } from '@/services/items'
+import { buyShopItem } from '@/services/items'
 import { checkAchievements } from '@/services/achievements'
 import { useAchievementQueue } from '@/hooks/use-achievement-queue'
 import { useShop } from '@/hooks/use-shop'
@@ -10,16 +10,10 @@ import { useCallback, useMemo } from 'react'
 import { useNotification } from '@/context/notification-context'
 import { getErrorMessage } from '@/utils/getErrorMessage'
 import { formatNumber } from '@/helpers/formatNumber'
+import { ShopItemData } from '@/types/shop'
 
 export default function Shop() {
-  const {
-    data,
-    isLoading,
-    refreshing,
-    refresh,
-    sort
-  } = useShop()
-
+  const { data, isLoading, refreshing, refresh, sort } = useShop()
   const { refetchUser, user, setUser } = useUserContext()
   const { showModal, hideModal } = useModal()
   const { notify } = useNotification()
@@ -31,20 +25,20 @@ export default function Shop() {
   const isInitialLoading = isLoading && !data
 
   const isOwned = useCallback(
-    (ownedItem: ItemData) =>
+    (ownedItem: ShopItemData) =>
       userItems?.some((item) => item._id === ownedItem._id) ?? false,
     [userItems]
   )
   const isNotEnoughCoins = useCallback(
-    (item: ItemData) => item.price > (coins ?? 0),
+    (item: ShopItemData) => item.price > (coins ?? 0),
     [coins]
   )
 
-  const handleBuy = useCallback(async (item: ItemData) => {
+  const handleBuy = useCallback(async (item: ShopItemData) => {
     if (isOwned(item) || isNotEnoughCoins(item)) return
 
     try {
-      const { coins: newCoins } = await buyItem(item._id)
+      const { coins: newCoins } = await buyShopItem(item._id)
 
       setUser((prev) => prev ? { ...prev, coins: newCoins } : null)
 
@@ -62,18 +56,16 @@ export default function Shop() {
     }
   }, [isOwned, isNotEnoughCoins, coins, setUser, hideModal, enqueue, refetchUser])
 
-  const openBuyModal = useCallback(
-    (item: ItemData) => {
-      showModal(
-        <BuyItemModal
-          item={item}
-          onConfirm={() => handleBuy(item)}
-          owned={isOwned(item)}
-          notEnoughCoins={isNotEnoughCoins(item)}
-          onCancel={hideModal}
-        />
-      )
-    },
+  const openBuyModal = useCallback((item: ShopItemData) => {
+    showModal(
+      <BuyItemModal
+        item={item}
+        onConfirm={() => handleBuy(item)}
+        owned={isOwned(item)}
+        notEnoughCoins={isNotEnoughCoins(item)}
+        onCancel={hideModal}
+      />
+    )},
     [showModal, hideModal, handleBuy, isOwned, isNotEnoughCoins]
   )
 
@@ -93,7 +85,6 @@ export default function Shop() {
       <View style={[styles.circle, styles.circleTopLeft]} />
       <View style={[styles.circle, styles.circleBottomRight]} />
 
-      {/* Шапка */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
@@ -101,7 +92,6 @@ export default function Shop() {
             <Text style={styles.headerSubtitle}>{data?.length || 0} товаров</Text>
           </View>
 
-          {/* Баланс */}
           <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Баланс</Text>
             {isInitialLoading ? (
@@ -115,7 +105,6 @@ export default function Shop() {
         </View>
       </View>
 
-      {/* Список карточек */}
       <ScrollView
         contentContainerStyle={styles.grid}
         showsVerticalScrollIndicator={false}

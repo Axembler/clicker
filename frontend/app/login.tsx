@@ -1,17 +1,10 @@
+import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { useState } from 'react'
+import { useRouter } from 'expo-router'
 import { useAuth } from '@/context/auth-context'
 import { useNotification } from '@/context/notification-context'
 import { authService } from '@/services/auth'
 import { getErrorMessage } from '@/utils/getErrorMessage'
-import { useRouter } from 'expo-router'
-import { useState } from 'react'
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native'
 
 interface FormErrors {
   username?: string
@@ -89,9 +82,9 @@ export default function LoginScreen() {
           onChangeText={handleUsernameChange}
           autoCapitalize="none"
         />
-        {errors.username && (
+        {errors.username ? (
           <Text style={styles.errorText}>{errors.username}</Text>
-        )}
+        ) : null}
       </View>
 
       <View style={styles.inputWrapper}>
@@ -103,9 +96,9 @@ export default function LoginScreen() {
           onChangeText={handlePasswordChange}
           secureTextEntry
         />
-        {errors.password && (
+        {errors.password ? (
           <Text style={styles.errorText}>{errors.password}</Text>
-        )}
+        ) : null}
       </View>
 
       <TouchableOpacity
@@ -113,11 +106,10 @@ export default function LoginScreen() {
         onPress={handleLogin}
         disabled={loading}
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Войти</Text>
-        )}
+        {loading
+          ? <ActivityIndicator color="#fff" />
+          : <Text style={styles.buttonText}>Войти</Text>
+        }
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push('/register')}>

@@ -1,13 +1,5 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  ActivityIndicator,
-  Animated,
-  GestureResponderEvent,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Animated, GestureResponderEvent, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useAuth } from '@/context/auth-context'
 import { useUserContext } from '@/context/user-context'
 import { formatNumber } from '@/helpers/formatNumber'

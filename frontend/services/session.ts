@@ -1,7 +1,7 @@
 import { apiClient } from "@/utils/apiClient"
 import * as SecureStore from 'expo-secure-store'
-import { UserData } from "./user"
 import { withHealthCheck } from "@/utils/withHealthCheck"
+import { UserData } from "@/types/user"
 
 const _wakeUp = async (): Promise<UserData> => {
   const localSleepAt = await SecureStore.getItemAsync('lastSleepAt')

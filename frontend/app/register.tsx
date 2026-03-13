@@ -1,31 +1,25 @@
+import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { useState } from 'react'
+import { useRouter } from 'expo-router'
 import { useAuth } from '@/context/auth-context'
 import { useNotification } from '@/context/notification-context'
 import { authService } from '@/services/auth'
 import { getErrorMessage } from '@/utils/getErrorMessage'
-import { useRouter } from 'expo-router'
-import { useState } from 'react'
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native'
+
+interface FormErrors {
+  username?: string
+  password?: string
+}
 
 export default function RegisterScreen() {
   const router = useRouter()
   const { signIn } = useAuth()
   const { notify } = useNotification()
 
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  const [errors, setErrors] = useState({
-    username: '',
-    password: '',
-  })
+  const [username, setUsername] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
+  const [loading, setLoading] = useState<boolean>(false)
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const handleUsernameChange = (text: string) => {
     setUsername(text)
@@ -40,24 +34,21 @@ export default function RegisterScreen() {
   }
 
   const validate = (): boolean => {
-    const newErrors = { username: '', password: '' }
-    let isValid = true
+    const newErrors: FormErrors = {}
 
     if (!username.trim()) {
       newErrors.username = 'Введите имя пользователя'
-      isValid = false
     }
 
-    if (!password) {
+    if (!password.trim()) {
       newErrors.password = 'Введите пароль'
-      isValid = false
     } else if (password.length < 6) {
       newErrors.password = 'Пароль должен быть минимум 6 символов'
-      isValid = false
     }
 
     setErrors(newErrors)
-    return isValid
+
+    return Object.keys(newErrors).length === 0
   }
 
   const handleRegister = async () => {
@@ -67,7 +58,9 @@ export default function RegisterScreen() {
 
     try {
       const { token } = await authService.register({ username, password })
+      
       await signIn(token)
+      
       router.replace('/(tabs)')
     } catch (error) {
       notify('error', getErrorMessage(error))

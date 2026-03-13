@@ -1,23 +1,10 @@
-import React, { memo, useMemo } from 'react'
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  RefreshControl,
-  DimensionValue,
-  TouchableOpacity,
-} from 'react-native'
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl, DimensionValue, TouchableOpacity } from 'react-native'
+import { memo, useMemo } from 'react'
 import { Achievement } from '@/types/achievements'
 import { useAchievements } from '@/hooks/use-achievements'
 import { formatDate } from '@/helpers/formatDate'
 import { usePrestige } from '@/hooks/use-prestige'
 import { formatNumber } from '@/helpers/formatNumber'
-
-interface AchievementCardProps {
-  achievement: Achievement
-}
 
 export default function Achievements() {
   const { data, isLoading, isRefreshing, sort, onRefresh } = useAchievements()
@@ -115,7 +102,7 @@ export default function Achievements() {
   )
 }
 
-const AchievementCard = memo(({ achievement }: AchievementCardProps) => {
+const AchievementCard = memo(({ achievement }: { achievement: Achievement}) => {
   const { unlocked, title, description, reward, unlockedAt } = achievement
 
   return (

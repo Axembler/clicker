@@ -8,10 +8,7 @@ import {
   View,
 } from 'react-native'
 
-const CONFIG: Record<
-  NotificationType,
-  { bg: string; border: string; icon: string; label: string }
-> = {
+const CONFIG: Record<NotificationType, { bg: string; border: string; icon: string; label: string }> = {
   success: {
     bg: '#F0FDF4',
     border: '#22C55E',

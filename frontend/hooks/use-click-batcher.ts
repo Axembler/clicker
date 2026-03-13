@@ -1,9 +1,10 @@
+import { Timestamps } from '@/types/counter'
 import { useRef, useCallback, useEffect } from 'react'
 
 const SYNC_DELAY = 2000
 const MAX_PENDING = 50
 
-type OnSyncFn = (timestamps: number[]) => Promise<void>
+type OnSyncFn = (timestamps: Timestamps) => Promise<void>
 
 export function useClickBatcher(onSync: OnSyncFn) {
   const pendingTimestamps = useRef<number[]>([])

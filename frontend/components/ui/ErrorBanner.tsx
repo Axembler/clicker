@@ -1,7 +1,13 @@
 import { memo } from "react"
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
-export const ErrorBanner = memo(({ message, onRetry, onSignOut }: { message: string; onRetry: () => void; onSignOut: () => void }) => (
+interface Props {
+  message?: string
+  onSignOut: () => void
+  onRetry: () => void
+}
+
+export const ErrorBanner = memo(({ message = 'Произошла неизвестная ошибка', onRetry, onSignOut }: Props) => (
   <View style={styles.errorBanner}>
     <Text style={styles.errorText}>{message}</Text>
 
@@ -10,7 +16,7 @@ export const ErrorBanner = memo(({ message, onRetry, onSignOut }: { message: str
     </TouchableOpacity>
 
     <TouchableOpacity onPress={onSignOut} style={styles.signOutBtn} activeOpacity={0.75}>
-      <Text style={styles.signOutBtnText}>Выйти</Text>
+      <Text style={styles.signOutBtnText}>Выйти из аккаунта</Text>
     </TouchableOpacity>
   </View>
 ))

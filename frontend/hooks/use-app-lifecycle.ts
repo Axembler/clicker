@@ -1,6 +1,6 @@
-import { sleep, wakeUp } from '@/services/user';
-import { useEffect, useRef } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
+import { sleep, wakeUp } from '@/services/session'
+import { useEffect, useRef } from 'react'
+import { AppState, AppStateStatus } from 'react-native'
 
 interface Options {
   onWakeUp: (data: {
