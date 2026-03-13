@@ -314,6 +314,8 @@ const styles = StyleSheet.create({
   rewardText: {
     fontSize: 12,
     fontWeight: '600',
+    width: '100%',
+    textAlign: 'center',
     color: '#888',
   },
   rewardTextUnlocked: {
