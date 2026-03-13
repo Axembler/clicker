@@ -71,32 +71,35 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.container}>
-
       <Text style={styles.title}>Регистрация</Text>
 
-      <TextInput
-        style={[styles.input, errors.username ? styles.inputError : null]}
-        placeholder="Имя пользователя"
-        placeholderTextColor="#999"
-        value={username}
-        onChangeText={handleUsernameChange}
-        autoCapitalize="none"
-      />
-      {errors.username ? (
-        <Text style={styles.errorText}>{errors.username}</Text>
-      ) : null}
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={[styles.input, errors.username && styles.inputError]}
+          placeholder="Имя пользователя"
+          placeholderTextColor="#999"
+          value={username}
+          onChangeText={handleUsernameChange}
+          autoCapitalize="none"
+        />
+        {errors.username ? (
+          <Text style={styles.errorText}>{errors.username}</Text>
+        ) : null}
+      </View>
 
-      <TextInput
-        style={[styles.input, errors.password ? styles.inputError : null]}
-        placeholder="Пароль (минимум 6 символов)"
-        placeholderTextColor="#999"
-        value={password}
-        onChangeText={handlePasswordChange}
-        secureTextEntry
-      />
-      {errors.password ? (
-        <Text style={styles.errorText}>{errors.password}</Text>
-      ) : null}
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={[styles.input, errors.password ? styles.inputError : null]}
+          placeholder="Пароль (минимум 6 символов)"
+          placeholderTextColor="#999"
+          value={password}
+          onChangeText={handlePasswordChange}
+          secureTextEntry
+        />
+        {errors.password ? (
+          <Text style={styles.errorText}>{errors.password}</Text>
+        ) : null}
+      </View>
 
       <TouchableOpacity
         style={styles.button}
@@ -115,7 +118,6 @@ export default function RegisterScreen() {
           <Text style={styles.linkBold}>Войти</Text>
         </Text>
       </TouchableOpacity>
-
     </View>
   )
 }
@@ -133,6 +135,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 40,
+  },
+  inputWrapper: {
+    width: '100%',
+    marginBottom: 16,
   },
   input: {
     width: '100%',

@@ -1,12 +1,13 @@
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native'
+import { View, Text, StyleSheet, FlatList } from 'react-native'
 import { useCallback, useMemo } from 'react'
 import { ItemSeparator, ListEmpty, MyRankCard, StatsRow, TableHeader, TableRow } from '@/components/records'
 import { formatNumber } from '@/helpers/formatNumber'
 import { useRecords } from '@/hooks/use-records'
 import { RecordEntry } from '@/types/records'
+import { LoadingBanner } from '@/components/ui/LoadingBanner'
 
 export default function RecordsScreen() {
-  const { data, myRank, isLoading, refreshing, refresh } = useRecords()
+  const { data, myRank, isLoading } = useRecords()
 
   const isInitialLoading = isLoading && !data
 
@@ -26,16 +27,6 @@ export default function RecordsScreen() {
     ), []
   )
 
-  if (isInitialLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#7C3AED" />
-        
-        <Text style={styles.loadingText}>Загрузка рекордов...</Text>
-      </View>
-    )
-  }
-
   return (
     <View style={styles.container}>
       <View style={[styles.circle, styles.circleTopLeft]} />
@@ -51,29 +42,25 @@ export default function RecordsScreen() {
 
         <View style={styles.tableDivider} />
 
-        <FlatList
-          data={data}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          ItemSeparatorComponent={ItemSeparator}
-          showsVerticalScrollIndicator={false}
-          scrollEnabled={data.length > 6}
-          ListEmptyComponent={ListEmpty}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={refresh}
-              tintColor="#7C3AED"
-              colors={['#7C3AED']}
-            />
-          }
-        />
+        {isInitialLoading 
+          ? <LoadingBanner message='Загрузка рекордов...' />
+          
+          : <FlatList
+            data={data}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            ItemSeparatorComponent={ItemSeparator}
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={data ? data.length > 6 : false}
+            ListEmptyComponent={ListEmpty}
+          />
+        }
       </View>
 
       {myRank && <MyRankCard myRank={myRank} />}
 
       <StatsRow
-        length={data.length}
+        length={data ? data.length : 0}
         totalClicks={formatNumber(totalClicks)}
         totalCoins={formatNumber(totalCoins)}
       />
@@ -82,18 +69,6 @@ export default function RecordsScreen() {
 }
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FAF8FF',
-    gap: 12,
-  },
-  loadingText: {
-    color: '#A78BFA',
-    fontSize: 16,
-  },
-
   container: {
     flex: 1,
     alignItems: 'center',
@@ -159,6 +134,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 20,
     elevation: 6,
+    minHeight: 232,
     maxHeight: 380,
   },
   tableDivider: {

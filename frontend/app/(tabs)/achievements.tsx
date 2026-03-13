@@ -1,26 +1,20 @@
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl, DimensionValue, TouchableOpacity } from 'react-native'
+import { View, Text, ScrollView, StyleSheet, DimensionValue, TouchableOpacity } from 'react-native'
 import { memo, useMemo } from 'react'
 import { Achievement } from '@/types/achievements'
 import { useAchievements } from '@/hooks/use-achievements'
 import { formatDate } from '@/helpers/formatDate'
 import { usePrestige } from '@/hooks/use-prestige'
 import { formatNumber } from '@/helpers/formatNumber'
+import { LoadingBanner } from '@/components/ui/LoadingBanner'
 
 export default function Achievements() {
-  const { data, isLoading, isRefreshing, sort, onRefresh } = useAchievements()
+  const { data, total, unlocked, isLoading } = useAchievements()
   const { openPrestigeModal } = usePrestige()
 
   const isInitialLoading = isLoading && !data
 
-  const sortedAchievements = useMemo(
-    () => sort(data?.achievements ?? []),
-    [data?.achievements, sort]
-  )
-
   const progressPercent = useMemo(() => {
     if (!data) return 0
-
-    const { total = 0, unlocked = 0 } = data
 
     return total > 0 ? Math.round((unlocked / total) * 100) : 0
   }, [data])
@@ -40,7 +34,7 @@ export default function Achievements() {
           <View>
             <Text style={styles.headerTitle}>Достижения</Text>
 
-            {data && data.unlocked === data.total ? (
+            {data && unlocked === total ? (
               <TouchableOpacity
                 style={styles.allUnlockedButton}
                 onPress={openPrestigeModal}
@@ -50,7 +44,7 @@ export default function Achievements() {
               </TouchableOpacity>
             ) : (
               <Text style={styles.headerSubtitle}>
-                {data ? `${data.unlocked} / ${data.total} открыто` : '...'}
+                {`${unlocked} / ${total} открыто`}
               </Text>
             )}
           </View>
@@ -76,28 +70,17 @@ export default function Achievements() {
         )}
       </View>
 
-      {isInitialLoading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#A78BFA" />
-          <Text style={styles.loadingText}>Загрузка достижений...</Text>
-        </View>
-      ) : (
-        <ScrollView
+      {isInitialLoading
+        ? <LoadingBanner message='Загрузка достижений...' />
+        : <ScrollView
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={onRefresh}
-              tintColor="#A78BFA"
-            />
-          }
         >
-          {sortedAchievements.map((achievement: Achievement) => (
+          {data?.map((achievement: Achievement) => (
             <AchievementCard key={achievement._id} achievement={achievement} />
           ))}
         </ScrollView>
-      )}
+      }
     </View>
   )
 }

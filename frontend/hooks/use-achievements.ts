@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import { Achievement, AchievementsResponse } from '@/types/achievements'
 import { getAchievements } from '@/services/achievements'
@@ -6,69 +6,36 @@ import { useNotification } from '@/context/notification-context'
 import { getErrorMessage } from '@/utils/getErrorMessage'
 
 const sortAchievements = (achievements: Achievement[] | undefined): Achievement[] =>
-  [...(achievements ?? [])].sort((a, b) => {
-    const fieldComparison = a.condition.field.localeCompare(b.condition.field)
+  [...(achievements ?? [])]
+    .sort((a, b) => {
+      const byField = a.condition.field.localeCompare(b.condition.field)
 
-    if (fieldComparison !== 0) return fieldComparison
-    
-    return a.condition.value - b.condition.value
-  })
-
-interface AchievementsState {
-  data: AchievementsResponse | null
-  isLoading: boolean
-  isRefreshing: boolean
-  error: string | null
-}
-
-const INITIAL_STATE: AchievementsState = {
-  data: null,
-  isLoading: true,
-  isRefreshing: false,
-  error: null,
-}
+      return byField !== 0 ? byField : a.condition.value - b.condition.value
+    })
 
 export function useAchievements() {
   const { notify } = useNotification()
 
-  const [state, setState] = useState<AchievementsState>(INITIAL_STATE)
+  const [data, setData] = useState<AchievementsResponse | null>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
 
-  const fetchAchievements = useCallback(async (silent = false) => {
-    setState(prev => ({
-      ...prev,
-      error: null,
-      ...(silent
-        ? { isRefreshing: true }
-        : { isLoading: true }
-      ),
-    }))
+  const fetchAchievements = useCallback(async () => {
+    setIsLoading(true)
 
     try {
-      const data = await getAchievements()
-
-      setState({
-        data,
-        isLoading: false,
-        isRefreshing: false,
-        error: null,
-      })
+      const result = await getAchievements()
+      setData(result)
     } catch {
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        isRefreshing: false,
-        error: 'Не удалось загрузить достижения',
-      }))
+      notify('error', getErrorMessage('Не удалось загрузить достижения'))
+    } finally {
+      setIsLoading(false)
     }
-  }, [])
+  }, [notify])
 
-  const onRefresh = useCallback(() => {
-    fetchAchievements(true)
-  }, [fetchAchievements])
-
-  useEffect(() => {
-    if (state.error) notify('error', getErrorMessage(state.error))
-  }, [state.error, notify])
+  const sortedAchievements = useMemo(
+    () => (data ? sortAchievements(data.achievements) : null),
+    [data]
+  )
 
   useFocusEffect(
     useCallback(() => {
@@ -77,8 +44,9 @@ export function useAchievements() {
   )
 
   return {
-    ...state,
-    sort: sortAchievements,
-    onRefresh,
+    data: sortedAchievements,
+    total: data?.total ?? 0,
+    unlocked: data?.unlocked ?? 0,
+    isLoading
   }
 }

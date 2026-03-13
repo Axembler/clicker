@@ -1,4 +1,4 @@
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { BuyItemModal } from '@/components/modals/BuyItemModal'
 import { useModal } from '@/context/modal-context'
 import { useUserContext } from '@/context/user-context'
@@ -11,18 +11,19 @@ import { useNotification } from '@/context/notification-context'
 import { getErrorMessage } from '@/utils/getErrorMessage'
 import { formatNumber } from '@/helpers/formatNumber'
 import { ShopItemData } from '@/types/shop'
+import ShopSkeleton from '@/components/ShopSkeleton'
 
 export default function Shop() {
-  const { data, isLoading, refreshing, refresh, sort } = useShop()
+  const { data, isLoading } = useShop()
   const { refetchUser, user, setUser } = useUserContext()
   const { showModal, hideModal } = useModal()
   const { notify } = useNotification()
   const { enqueue } = useAchievementQueue()
 
+  const isInitialLoading = isLoading && !data
+
   const coins = user?.coins ?? null
   const userItems = user?.items ?? null
-
-  const isInitialLoading = isLoading && !data
 
   const isOwned = useCallback(
     (ownedItem: ShopItemData) =>
@@ -72,7 +73,7 @@ export default function Shop() {
   const sortedData = useMemo(() => {
     if (!data) return []
 
-    return sort(data).sort((a, b) => {
+    return data.sort((a, b) => {
       const aOwned = isOwned(a) ? 1 : 0
       const bOwned = isOwned(b) ? 1 : 0
 
@@ -105,55 +106,51 @@ export default function Shop() {
         </View>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.grid}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={refresh}
-            tintColor="#7C3AED"
-            colors={['#7C3AED']}
-          />
-        }
-      >
-        {!isInitialLoading && sortedData?.map((item) => {
-          const owned = isOwned(item)
+      {isInitialLoading
+        ? <ShopSkeleton />
+        
+        : <ScrollView
+          contentContainerStyle={styles.grid}
+          showsVerticalScrollIndicator={false}
+        >
+          {sortedData.map((item) => {
+            const owned = isOwned(item)
 
-          return (
-            <TouchableOpacity
-              key={item._id}
-              style={styles.card}
-              activeOpacity={owned ? 1 : 0.8}
-              onPress={() => openBuyModal(item)}
-            >
-              <View style={[styles.imagePlaceholder, { backgroundColor: item.color }]} />
+            return (
+              <TouchableOpacity
+                key={item._id}
+                style={styles.card}
+                activeOpacity={owned ? 1 : 0.8}
+                onPress={() => openBuyModal(item)}
+              >
+                <View style={[styles.imagePlaceholder, { backgroundColor: item.color }]} />
 
-              <View style={styles.cardBody}>
-                <Text style={[styles.itemName, owned && styles.textDisabled]} numberOfLines={2}>
-                  {item.name}
-                </Text>
-
-                <View style={styles.cardFooter}>
-                  <Text style={[styles.price, owned && styles.textDisabled]}>
-                    🪙 {formatNumber(item.price)}
+                <View style={styles.cardBody}>
+                  <Text style={[styles.itemName, owned && styles.textDisabled]} numberOfLines={2}>
+                    {item.name}
                   </Text>
 
-                  {owned ? (
-                    <View style={[styles.addButton, styles.addButtonDisabled]}>
-                      <Text style={styles.addButtonText}>✓</Text>
-                    </View>
-                  ) : (
-                    <View style={styles.addButton}>
-                      <Text style={styles.addButtonText}>+</Text>
-                    </View>
-                  )}
+                  <View style={styles.cardFooter}>
+                    <Text style={[styles.price, owned && styles.textDisabled]}>
+                      🪙 {formatNumber(item.price)}
+                    </Text>
+
+                    {owned ? (
+                      <View style={[styles.addButton, styles.addButtonDisabled]}>
+                        <Text style={styles.addButtonText}>✓</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.addButton}>
+                        <Text style={styles.addButtonText}>+</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          )
-        })}
-      </ScrollView>
+              </TouchableOpacity>
+            )
+          })}
+        </ScrollView>
+      }
     </View>
   )
 }

@@ -3,53 +3,56 @@ import { getRecords, getUserRecord } from "@/services/records"
 import { RecordEntry, SortField, UserRecordData } from "@/types/records"
 import { getErrorMessage } from "@/utils/getErrorMessage"
 import { useFocusEffect } from "expo-router"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
+
+interface RecordsState {
+  data: RecordEntry[] | null
+  myRank?: UserRecordData
+}
+
+function sortRecords(data: RecordEntry[], field: SortField) {
+  return [...data]
+    .sort((a, b) => b[field] - a[field])
+    .map((item, index) => ({ ...item, rank: index + 1 }))
+}
 
 export function useRecords() {
   const { notify } = useNotification()
-  
-  const [data, setData] = useState<RecordEntry[]>([])
-  const [myRank, setMyRank] = useState<UserRecordData>()
-  const [sortField, setSortField]  = useState<SortField>('totalClicks')
-  const [isLoading, setIsLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const fetchData = useCallback(async (isRefresh = false) => {
+  const [{ data, myRank }, setRecords] = useState<RecordsState>({ data: null })
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [sortField, setSortField] = useState<SortField>('totalClicks')
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true)
+
     try {
-      isRefresh ? setRefreshing(true) : setIsLoading(true)
-      setError(null)
-
       const [recordsData, userRecordData] = await Promise.all([
         getRecords(),
-        getUserRecord()
+        getUserRecord(),
       ])
 
       if (!recordsData.success) {
         throw new Error(recordsData.message ?? 'Ошибка сервера')
       }
 
-      setData(recordsData.records)
-
-      if (userRecordData.success) {
-        setMyRank({
-          success: userRecordData.success,
-          rank: userRecordData.rank,
-          user: userRecordData.user,
-        })
-      }
-
+      setRecords({
+        data: recordsData.records,
+        myRank: userRecordData.success ? userRecordData : undefined,
+      })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Неизвестная ошибка'
 
-      setError(message)
-
-      console.error('Error:', err)
+      notify('error', getErrorMessage(message))
     } finally {
       setIsLoading(false)
-      setRefreshing(false)
     }
-  }, [])
+  }, [notify])
+
+  const sortedRecords = useMemo(
+    () => (data ? sortRecords(data, sortField) : null),
+    [data, sortField]
+  )
 
   useFocusEffect(
     useCallback(() => {
@@ -57,24 +60,11 @@ export function useRecords() {
     }, [fetchData])
   )
 
-  useEffect(() => {
-    if (error) notify('error', getErrorMessage(error))
-  }, [error, notify])
-
-  const refresh = useCallback(() => fetchData(true), [fetchData])
-
-  const sortedRecords = [...data].sort((a, b) =>
-    b[sortField] - a[sortField]
-  ).map((item, index) => ({ ...item, rank: index + 1 }))
-
   return {
     data: sortedRecords,
     myRank,
     sortField,
     setSortField,
-    isLoading,
-    refreshing,
-    error,
-    refresh
+    isLoading
   }
 }
