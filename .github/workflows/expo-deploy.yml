@@ -20,7 +20,7 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Check changed files (native folders)
+      - name: Check changed native files
         uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -31,12 +31,16 @@ jobs:
               - 'frontend/app.json'
               - 'frontend/app.config.js'
               - 'frontend/app.config.ts'
+              - 'frontend/eas.json'
+              - 'frontend/package-lock.json'
+              - 'frontend/yarn.lock'
 
-      - name: Check if dependencies changed in package.json
+      - name: Check if dependencies changed
         id: pkg-check
         run: |
           PKG_CHANGED=false
-          if git diff HEAD~1 HEAD -- frontend/package.json | grep -qE '^\+.*"(dependencies|devDependencies)"'; then
+          if git diff HEAD~1 HEAD -- frontend/package.json \
+            | grep -qE '^\+.*"(dependencies|devDependencies|peerDependencies)"'; then
             PKG_CHANGED=true
           fi
           echo "pkg_changed=$PKG_CHANGED" >> $GITHUB_OUTPUT
@@ -44,63 +48,11 @@ jobs:
       - name: Set final output
         id: set-output
         run: |
-          if [ "${{ steps.filter.outputs.native }}" == "true" ] || [ "${{ steps.pkg-check.outputs.pkg_changed }}" == "true" ]; then
+          if [ "${{ steps.filter.outputs.native }}" == "true" ] \
+          || [ "${{ steps.pkg-check.outputs.pkg_changed }}" == "true" ]; then
             echo "native_changed=true" >> $GITHUB_OUTPUT
           else
             echo "native_changed=false" >> $GITHUB_OUTPUT
-          fi
-        
-      - name: Detect changed files
-        id: changes
-        run: |
-          CHANGED=$(git diff --name-only HEAD~1 HEAD)
-          echo "Changed files:"
-          echo "$CHANGED"
-
-          PACKAGE_IS_NATIVE=false
-
-          if echo "$CHANGED" | grep -q "^frontend/package\.json$"; then
-            echo "📦 package.json изменился, анализ..."
-
-            PACKAGE_IS_NATIVE=$(python3 << 'EOF'
-          import json, subprocess, sys
-
-          def get_pkg(ref):
-              result = subprocess.run(
-                  ["git", "show", f"{ref}:frontend/package.json"],
-                  #                    ↑ добавили frontend/
-                  capture_output=True, text=True
-              )
-              if result.returncode != 0:
-                  return {}
-              return json.loads(result.stdout)
-
-          old = get_pkg("HEAD~1")
-          new = get_pkg("HEAD")
-          NATIVE_KEYS = ["dependencies", "devDependencies", "peerDependencies"]
-
-          for key in NATIVE_KEYS:
-              if old.get(key) != new.get(key):
-                  print("true")
-                  sys.exit(0)
-
-          print("false")
-          EOF
-            )
-
-            if [ "$PACKAGE_IS_NATIVE" = "true" ]; then
-              echo "🔴 Изменились зависимости в package.json"
-            else
-              echo "🟢 В package.json изменилась только версия (или scripts/другое)"
-            fi
-          fi
-
-          NATIVE_PATTERN="^frontend/(android/|ios/|package-lock\.json|yarn\.lock|app\.json|app\.config\.(js|ts)|eas\.json|Gemfile)"
-          
-          if echo "$CHANGED" | grep -qE "$NATIVE_PATTERN" || [ "$PACKAGE_IS_NATIVE" = "true" ]; then
-            echo "type=native" >> $GITHUB_OUTPUT
-          else
-            echo "type=js" >> $GITHUB_OUTPUT
           fi
 
   ota-update:
