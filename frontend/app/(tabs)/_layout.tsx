@@ -31,9 +31,9 @@ export default function TabLayout() {
                 }}
               />
               <Tabs.Screen
-                name="records"
+                name="skills"
                 options={{
-                  title: 'Рекорды',
+                  title: 'Умения',
                   tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
                 }}
               />
@@ -41,6 +41,13 @@ export default function TabLayout() {
                 name="achievements"
                 options={{
                   title: 'Достижения',
+                  tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
+                }}
+              />
+              <Tabs.Screen
+                name="records"
+                options={{
+                  title: 'Рекорды',
                   tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
                 }}
               />

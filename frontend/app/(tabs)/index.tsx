@@ -16,6 +16,7 @@ import { FloatingNumbers } from '@/components/FloatingNumbers'
 import { calcPrestigeMultiplier } from '@/utils/calcPrestigeMultiplier'
 import { ErrorBanner } from '@/components/ui/ErrorBanner'
 import { LoadingBanner } from '@/components/ui/LoadingBanner'
+import { MainLayout } from '@/components/layouts/MainLayout'
 
 type LocalStats = {
   localClicks: number
@@ -149,7 +150,7 @@ export default function HomeScreen() {
   if (error) return <ErrorBanner message={error} onRetry={refetchUser} onSignOut={signOut} />
 
   return (
-    <View style={styles.container}>
+    <MainLayout>
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={handleSignOut}
@@ -189,9 +190,6 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View style={[styles.circle, styles.circleTopLeft]} />
-      <View style={[styles.circle, styles.circleBottomRight]} />
-
       <Text style={styles.title}>Счетчик</Text>
       <Text style={styles.subtitle}>Нажимай и считай 🎯</Text>
 
@@ -223,7 +221,7 @@ export default function HomeScreen() {
       </TouchableOpacity>
 
       <FloatingNumbers numbers={floatingNumbers} />
-    </View>
+    </MainLayout>
   )
 }
 
@@ -249,6 +247,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 16,
     paddingHorizontal: 32,
+    marginTop: 80,
     marginBottom: 32,
     shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 4 },

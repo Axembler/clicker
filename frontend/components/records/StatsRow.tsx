@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
     gap: 16,
+    width: '100%'
   },
   statCard: {
     alignItems: 'center',

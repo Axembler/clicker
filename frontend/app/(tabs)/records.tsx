@@ -5,6 +5,7 @@ import { formatNumber } from '@/helpers/formatNumber'
 import { useRecords } from '@/hooks/use-records'
 import { RecordEntry } from '@/types/records'
 import { LoadingBanner } from '@/components/ui/LoadingBanner'
+import { MainLayout } from '@/components/layouts/MainLayout'
 
 export default function RecordsScreen() {
   const { data, myRank, isLoading } = useRecords()
@@ -28,10 +29,7 @@ export default function RecordsScreen() {
   )
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.circle, styles.circleTopLeft]} />
-      <View style={[styles.circle, styles.circleBottomRight]} />
-
+    <MainLayout>
       <View style={styles.header}>
         <Text style={styles.title}>🏆 Рекорды</Text>
         <Text style={styles.subtitle}>Лучшие игроки</Text>
@@ -64,19 +62,11 @@ export default function RecordsScreen() {
         totalClicks={formatNumber(totalClicks)}
         totalCoins={formatNumber(totalCoins)}
       />
-    </View>
+    </MainLayout>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: '#FAF8FF',
-    paddingHorizontal: 24,
-    paddingTop: 24,
-  },
-  
   header: {
     width: '100%',
     justifyContent: 'space-between',
@@ -87,27 +77,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EFEFEF',
   },
-
-  circle: {
-    position: 'absolute',
-    borderRadius: 999,
-    opacity: 0.15,
-  },
-  circleTopLeft: {
-    width: 280,
-    height: 280,
-    backgroundColor: '#C4B5FD',
-    top: -80,
-    left: -80,
-  },
-  circleBottomRight: {
-    width: 220,
-    height: 220,
-    backgroundColor: '#FBCFE8',
-    bottom: -60,
-    right: -60,
-  },
-
   title: {
     fontSize: 32,
     fontWeight: '800',

@@ -12,6 +12,7 @@ import { getErrorMessage } from '@/utils/getErrorMessage'
 import { formatNumber } from '@/helpers/formatNumber'
 import { ShopItemData } from '@/types/shop'
 import ShopSkeleton from '@/components/ShopSkeleton'
+import { MainLayout } from '@/components/layouts/MainLayout'
 
 export default function Shop() {
   const { data, isLoading } = useShop()
@@ -82,10 +83,7 @@ export default function Shop() {
   }, [data, isOwned])
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.circle, styles.circleTopLeft]} />
-      <View style={[styles.circle, styles.circleBottomRight]} />
-
+    <MainLayout>
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
@@ -151,40 +149,11 @@ export default function Shop() {
           })}
         </ScrollView>
       }
-    </View>
+    </MainLayout>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: '#FAF8FF',
-    paddingHorizontal: 12,
-    paddingTop: 24,
-  },
-
-  circle: {
-    position: 'absolute',
-    borderRadius: 999,
-    opacity: 0.15,
-  },
-  circleTopLeft: {
-    width: 280,
-    height: 280,
-    backgroundColor: '#C4B5FD',
-    top: -80,
-    left: -80,
-  },
-  circleBottomRight: {
-    width: 220,
-    height: 220,
-    backgroundColor: '#FBCFE8',
-    bottom: -60,
-    right: -60,
-  },
-
-  // Шапка
   header: {
     paddingHorizontal: 16,
     paddingTop: 60,

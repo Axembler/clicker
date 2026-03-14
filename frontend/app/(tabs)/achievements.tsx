@@ -6,6 +6,7 @@ import { formatDate } from '@/helpers/formatDate'
 import { usePrestige } from '@/hooks/use-prestige'
 import { formatNumber } from '@/helpers/formatNumber'
 import { LoadingBanner } from '@/components/ui/LoadingBanner'
+import { MainLayout } from '@/components/layouts/MainLayout'
 
 export default function Achievements() {
   const { data, total, unlocked, isLoading } = useAchievements()
@@ -25,10 +26,7 @@ export default function Achievements() {
   )
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.circle, styles.circleTopLeft]} />
-      <View style={[styles.circle, styles.circleBottomRight]} />
-
+    <MainLayout>
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
@@ -51,6 +49,7 @@ export default function Achievements() {
 
           <View style={styles.progressBadge}>
             <Text style={styles.progressBadgeLabel}>Прогресс</Text>
+            
             {isInitialLoading ? (
               <Text style={styles.progressBadgeValue}>...</Text>
             ) : data ? (
@@ -81,7 +80,7 @@ export default function Achievements() {
           ))}
         </ScrollView>
       }
-    </View>
+    </MainLayout>
   )
 }
 
@@ -123,34 +122,8 @@ const AchievementCard = memo(({ achievement }: { achievement: Achievement}) => {
 })
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FAF8FF',
-    paddingHorizontal: 12,
-    paddingTop: 24,
-  },
-
-  circle: {
-    position: 'absolute',
-    borderRadius: 999,
-    opacity: 0.15,
-  },
-  circleTopLeft: {
-    width: 280,
-    height: 280,
-    backgroundColor: '#C4B5FD',
-    top: -80,
-    left: -80,
-  },
-  circleBottomRight: {
-    width: 220,
-    height: 220,
-    backgroundColor: '#FBCFE8',
-    bottom: -60,
-    right: -60,
-  },
-
   header: {
+    width: '100%',
     paddingHorizontal: 16,
     paddingTop: 60,
     paddingBottom: 16,
@@ -158,7 +131,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EFEFEF',
   },
   headerTop: {
-    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -213,9 +185,10 @@ const styles = StyleSheet.create({
   progressBadgeValue: {
     fontSize: 16,
     fontWeight: '700',
+    textAlign: 'center',
+    width: 66,
     color: '#7C3AED',
   },
-
   progressBarContainer: {
     height: 6,
     backgroundColor: '#EDE9FE',
@@ -229,12 +202,14 @@ const styles = StyleSheet.create({
   },
 
   list: {
+    width: '100%',
     paddingTop: 16,
     paddingBottom: 40,
     gap: 12,
   },
 
   card: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
