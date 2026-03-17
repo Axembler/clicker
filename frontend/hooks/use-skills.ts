@@ -1,27 +1,23 @@
-import { useNotification } from "@/context/notification-context"
-import { getItems } from "@/services/items"
-import { Item } from "@/types/shop"
-import { getErrorMessage } from "@/utils/getErrorMessage"
+import { useCallback, useState } from "react"
 import { useFocusEffect } from "expo-router"
-import { useCallback, useMemo, useState } from "react"
+import { useNotification } from "@/context/notification-context"
+import { Skill } from "@/types/skills"
+import { getErrorMessage } from "@/utils/getErrorMessage"
+import { getSkills } from "@/services/skills"
 
-function sortShop(data: Item[]): Item[] {
-  return [...data].sort((a, b) => a.price - b.price)
-}
-
-export function useShop() {
+export function useSkills() {
   const { notify } = useNotification()
 
-  const [data, setData] = useState<Item[] | null>(null)
+  const [data, setData] = useState<Skill[] | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
 
     try {
-      const fetchedItems = await getItems()
+      const fetchedSkills = await getSkills()
 
-      setData(fetchedItems)
+      setData(fetchedSkills)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Неизвестная ошибка'
 
@@ -31,11 +27,6 @@ export function useShop() {
     }
   }, [notify])
 
-  const sortedShop = useMemo(
-    () => (data ? sortShop(data) : null),
-    [data]
-  )
-
   useFocusEffect(
     useCallback(() => {
       fetchData()
@@ -43,7 +34,7 @@ export function useShop() {
   )
 
   return {
-    data: sortedShop,
-    isLoading: isLoading
+    data,
+    isLoading
   }
 }

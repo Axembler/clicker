@@ -1,7 +1,7 @@
-import { BuyShopItemResponse, ShopItemData } from "@/types/shop"
+import { BuyItemResponse, Item, UserItem } from "@/types/shop"
 import { apiClient } from "@/utils/apiClient"
 
-export const getShopItems = async (): Promise<ShopItemData[]> => {
+export const getItems = async (): Promise<Item[]> => {
   const response = await apiClient('/items', {
     method: 'GET',
   })
@@ -15,7 +15,21 @@ export const getShopItems = async (): Promise<ShopItemData[]> => {
   return data
 }
 
-export const buyShopItem = async (itemId: string): Promise<BuyShopItemResponse> => {
+export const getUserItems = async (): Promise<UserItem[]> => {
+  const response = await apiClient('/items/user', {
+    method: 'GET',
+  })
+
+  if (!response.ok) {
+    throw new Error('Ошибка получения предметов пользователя')
+  }
+
+  const data = await response.json()
+
+  return data
+}
+
+export const buyItem = async (itemId: string): Promise<BuyItemResponse> => {
   const response = await apiClient(`/items/buy/${itemId}`, {
     method: 'POST',
   })

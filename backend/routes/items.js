@@ -1,40 +1,52 @@
 const express = require('express')
+const { default: mongoose } = require('mongoose')
 const router = express.Router()
 const User = require('../models/User')
 const Item = require('../models/Item')
+const UserItems = require('../models/UserItems')
 const auth = require('../middleware/auth')
-const { calcPrestigeMultiplier } = require('../services/expressions')
+const { computeStats } = require('../services/statsService')
 
-// Получить все предметы с ценами от престижа
+// Получить все предметы
 router.get('/', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
-    if (!user) {
-      return res.status(404).json({ message: 'Пользователь не найден' })
-    }
+    const items = await Item.find()
 
-    const multiplier = calcPrestigeMultiplier(user.prestige)
-    const items = await Item.find().sort({ sortOrder: 1 })
-
-    const adjustedItems = items.map(item => ({
-      ...item.toObject(),
-      price: Math.round(item.price * multiplier),
-    }))
-
-    res.json(adjustedItems)
+    res.json(items)
   } catch (error) {
+    console.log('Error: ', error.message)
+    
     res.status(500).json({ message: 'Ошибка сервера', error: error.message })
+  }
+})
+
+// Получить все предметы пользователя
+router.get('/user', auth, async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user.id)
+    
+    const userItems = await UserItems.find({ user: userId }).sort({ sortOrder: 1 })
+      .populate('item', 'clickPowerBonus description name passiveIncomeBonus price sortOrder color')
+
+    res.json(userItems)
+  } catch (error) {
+    console.log(error.message)
+    
+    res.status(500).json({ message: 'Ошибка сервера' })
   }
 })
 
 // Купить предмет
 router.post('/buy/:itemId', auth, async (req, res) => {
   try {
+    const userId = new mongoose.Types.ObjectId(req.user.id)
     const { itemId } = req.params
 
-    const [item, user] = await Promise.all([
+    const [item, user, existingUserItem, { prestigeMultiplier } ] = await Promise.all([
       Item.findById(itemId),
-      User.findById(req.user.id),
+      User.findById(userId),
+      UserItems.findOne({ user: userId, item: itemId }),
+      computeStats(userId)
     ])
 
     if (!item) {
@@ -44,46 +56,38 @@ router.post('/buy/:itemId', auth, async (req, res) => {
       return res.status(404).json({ message: 'Пользователь не найден' })
     }
 
-    const multiplier = calcPrestigeMultiplier(user.prestige)
-    const adjustedPrice = Math.round(item.price * multiplier)
+    if (existingUserItem) {
+      return res.status(400).json({ message: 'Предмет уже куплен' })
+    }
 
+    const adjustedPrice = Math.floor(item.price * prestigeMultiplier)
     if (user.coins < adjustedPrice) {
       return res.status(400).json({ message: 'Недостаточно монет' })
     }
 
-    const alreadyOwned = user.items.some(i => i._id.toString() === itemId)
-    if (alreadyOwned) {
+    user.coins -= adjustedPrice
+
+    const newUserItem = new UserItems({
+      user: userId,
+      item: itemId
+    })
+
+    await Promise.all([user.save(), newUserItem.save()])
+
+    res.json({
+      message: `Предмет "${item.name}" куплен за ${adjustedPrice}`,
+      userItem: newUserItem,
+      coins: user.coins,
+    })
+  } catch (error) {
+    if (error.code === 11000) {
       return res.status(400).json({ message: 'Предмет уже куплен' })
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        $inc: {
-          coins: -adjustedPrice,
-          clickPower: item.clickPowerBonus,
-          passiveIncome: item.passiveIncomeBonus,
-        },
-        $push: {
-          items: {
-            _id: item._id,
-            name: item.name,
-          },
-        },
-      },
-      { returnDocument: 'after' }
-    )
-
-    res.json({
-      message: `Предмет "${item.name}" успешно куплен за ${adjustedPrice}`,
-      coins: updatedUser.coins,
-      clickPower: updatedUser.clickPower,
-      passiveIncome: updatedUser.passiveIncome,
-      items: updatedUser.items,
-    })
-  } catch (error) {
+    console.log('Error: ', error.message)
     res.status(500).json({ message: 'Ошибка сервера', error: error.message })
   }
 })
+
 
 module.exports = router

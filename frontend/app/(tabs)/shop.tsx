@@ -1,8 +1,8 @@
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { BuyItemModal } from '@/components/modals/BuyItemModal'
 import { useModal } from '@/context/modal-context'
-import { useUserContext } from '@/context/user-context'
-import { buyShopItem } from '@/services/items'
+import { useUser } from '@/context/user-context'
+import { buyItem } from '@/services/items'
 import { checkAchievements } from '@/services/achievements'
 import { useAchievementQueue } from '@/hooks/use-achievement-queue'
 import { useShop } from '@/hooks/use-shop'
@@ -10,13 +10,17 @@ import { useCallback, useMemo } from 'react'
 import { useNotification } from '@/context/notification-context'
 import { getErrorMessage } from '@/utils/getErrorMessage'
 import { formatNumber } from '@/helpers/formatNumber'
-import { ShopItemData } from '@/types/shop'
+import { Item } from '@/types/shop'
 import ShopSkeleton from '@/components/ShopSkeleton'
 import { MainLayout } from '@/components/layouts/MainLayout'
+import { useUserItems } from '@/hooks/use-user-items'
+import { useStats } from '@/hooks/use-stats'
 
 export default function Shop() {
   const { data, isLoading } = useShop()
-  const { refetchUser, user, setUser } = useUserContext()
+  const { refetchUser, user, setUser } = useUser()
+  const { data: userItems, refetchData  } = useUserItems()
+  const { refetchData: refetchStats  } = useStats()
   const { showModal, hideModal } = useModal()
   const { notify } = useNotification()
   const { enqueue } = useAchievementQueue()
@@ -24,41 +28,40 @@ export default function Shop() {
   const isInitialLoading = isLoading && !data
 
   const coins = user?.coins ?? null
-  const userItems = user?.items ?? null
 
   const isOwned = useCallback(
-    (ownedItem: ShopItemData) =>
-      userItems?.some((item) => item._id === ownedItem._id) ?? false,
+    (ownedItem: Item) =>
+      userItems?.some((item) => item.item._id === ownedItem._id) ?? false,
     [userItems]
   )
   const isNotEnoughCoins = useCallback(
-    (item: ShopItemData) => item.price > (coins ?? 0),
+    (item: Item) => item.price > (coins ?? 0),
     [coins]
   )
 
-  const handleBuy = useCallback(async (item: ShopItemData) => {
+  const handleBuy = useCallback(async (item: Item) => {
     if (isOwned(item) || isNotEnoughCoins(item)) return
 
     try {
-      const { coins: newCoins } = await buyShopItem(item._id)
+      const { coins: newCoins } = await buyItem(item._id)
 
       setUser((prev) => prev ? { ...prev, coins: newCoins } : null)
 
-      hideModal()
-
-      const { newAchievements } = await checkAchievements()
+      const newAchievements = await checkAchievements()
 
       if (newAchievements.length > 0) {
         setTimeout(() => enqueue(newAchievements), 350)
       }
 
-      await refetchUser()
+      await Promise.all([refetchUser(), refetchData(), refetchStats()])
+
+      hideModal()
     } catch (err) {
       notify('error', getErrorMessage(err))
     }
-  }, [isOwned, isNotEnoughCoins, coins, setUser, hideModal, enqueue, refetchUser])
+  }, [isOwned, isNotEnoughCoins, coins, setUser, hideModal, enqueue, refetchUser, refetchData, refetchStats])
 
-  const openBuyModal = useCallback((item: ShopItemData) => {
+  const openBuyModal = useCallback((item: Item) => {
     showModal(
       <BuyItemModal
         item={item}

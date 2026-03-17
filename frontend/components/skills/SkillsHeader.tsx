@@ -2,15 +2,15 @@ import { DimensionValue, StyleSheet, Text, View } from "react-native"
 import { memo, useMemo } from "react"
 
 interface Props {
-  talentPoints: number
+  skillPoints: number
   unlockedNodes: number
   totalNodes: number
 }
 
-export const SkillsHeader = memo(({ talentPoints, unlockedNodes, totalNodes }: Props) => {
+export const SkillsHeader = memo(({ skillPoints, unlockedNodes, totalNodes }: Props) => {
   const progressPercent = useMemo(() => {
-    return totalNodes > 0 ? Math.round((unlockedNodes / totalNodes) * 100) : 0
-  }, [])
+    return totalNodes > 0 ? Math.floor((unlockedNodes / totalNodes) * 100) : 0
+  }, [unlockedNodes, totalNodes])
 
   const progressBarStyle = useMemo(
     () => [styles.progressBarFill, { width: `${progressPercent}%` as DimensionValue }],
@@ -32,7 +32,7 @@ export const SkillsHeader = memo(({ talentPoints, unlockedNodes, totalNodes }: P
           <Text style={styles.progressBadgeLabel}>Очки талантов</Text>
           
           <Text style={styles.progressBadgeValue}>
-            ✨ {talentPoints} ОТ
+            ✨ {skillPoints} ОТ
           </Text>
         </View>
       </View>

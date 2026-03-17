@@ -1,1 +1,0 @@
-export const calcPrestigeMultiplier = (prestige: number = 0): number => Math.max(1, Math.pow(prestige, 2) * (prestige + 1))

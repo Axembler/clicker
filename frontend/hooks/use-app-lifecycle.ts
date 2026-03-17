@@ -6,7 +6,6 @@ interface Options {
   onWakeUp: (data: {
     passiveEarned: number
     passiveSeconds: number
-    coins: number
   }) => void
 }
 
@@ -21,8 +20,9 @@ export const useAppLifecycle = ({ onWakeUp }: Options) => {
 
   useEffect(() => {
     const handleWakeUp = async () => {
-      if (isProcessing.current) return
-
+      if (isProcessing.current) {
+        return
+      }
       isProcessing.current = true
 
       try {
@@ -30,8 +30,7 @@ export const useAppLifecycle = ({ onWakeUp }: Options) => {
 
         onWakeUpRef.current({
           passiveEarned: data.passiveEarned,
-          passiveSeconds: data.passiveSeconds,
-          coins: data.coins,
+          passiveSeconds: data.passiveSeconds
         })
       } finally {
         isProcessing.current = false
@@ -41,21 +40,22 @@ export const useAppLifecycle = ({ onWakeUp }: Options) => {
     handleWakeUp()
 
     const subscription = AppState.addEventListener('change', async (nextState) => {
+      const prevState = appState.current
+      appState.current = nextState
+
       if (
-        appState.current === 'active' &&
+        prevState === 'active' &&
         (nextState === 'background' || nextState === 'inactive')
       ) {
         await sleep()
       }
 
       if (
-        (appState.current === 'background' || appState.current === 'inactive') &&
+        (prevState === 'background' || prevState === 'inactive') &&
         nextState === 'active'
       ) {
         await handleWakeUp()
       }
-
-      appState.current = nextState
     })
 
     return () => subscription.remove()

@@ -1,5 +1,21 @@
 const mongoose = require('mongoose')
+const { formatNumber } = require('../utils/formatNumber')
+const { PRESTIGE_FIELDS } = require('../constants/achievementConstants')
 
+/**
+ * @typedef {Object} IAchievementMethods
+ * @property {(prestigeMultiplier?: number) => string} getDescription
+ */
+
+/**
+ * @typedef {mongoose.Model<
+ *   mongoose.InferSchemaType<typeof achievementSchema>,
+ *   {},
+ *   IAchievementMethods
+ * >} AchievementModel
+ */
+
+/** @type {mongoose.Schema<any, AchievementModel, IAchievementMethods>} */
 const achievementSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -32,8 +48,17 @@ const achievementSchema = new mongoose.Schema({
     }
   }
 }, {
-  timestamps: true,
   collection: "achievements"
 })
+
+achievementSchema.methods.getDescription = function (prestigeMultiplier = 1) {
+  const isCoinBased = PRESTIGE_FIELDS.has(this.condition.field)
+
+  if (!isCoinBased) return this.description
+
+  const scaledValue = Math.floor(this.condition.value * prestigeMultiplier)
+
+  return `Накопить ${formatNumber(scaledValue)} монет`
+}
 
 module.exports = mongoose.model('Achievement', achievementSchema)

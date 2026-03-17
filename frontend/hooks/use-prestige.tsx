@@ -1,13 +1,13 @@
-import { useUserContext } from '@/context/user-context'
+import { useUser } from '@/context/user-context'
 import { useModal } from '@/context/modal-context'
 import { useNotification } from '@/context/notification-context'
-import { prestige } from '@/services/user'
 import { getErrorMessage } from '@/utils/getErrorMessage'
 import { PrestigeModal } from '@/components/modals/PrestigeModal'
 import { router } from 'expo-router'
+import { prestige } from '@/services/prestige'
 
 export const usePrestige = () => {
-  const { user, setUser, refetchUser } = useUserContext()
+  const { user, setUser, refetchUser } = useUser()
   const { showModal, hideModal } = useModal()
   const { notify } = useNotification()
 

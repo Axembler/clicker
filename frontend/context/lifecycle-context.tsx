@@ -1,6 +1,6 @@
 import { createContext, useContext, useCallback, ReactNode } from 'react'
 import { useAppLifecycle } from '@/hooks/use-app-lifecycle'
-import { useUserContext } from './user-context'
+import { useUser } from './user-context'
 import { useModal } from './modal-context'
 import { PassiveIncomeModal } from '@/components/modals/PassiveIncomeModal'
 
@@ -9,7 +9,7 @@ const LifecycleContext = createContext({})
 export const useLifecycleContext = () => useContext(LifecycleContext)
 
 export function LifecycleProvider({ children }: { children: ReactNode }) {
-  const { setUser } = useUserContext()
+  const { setUser } = useUser()
   const { showModal } = useModal()
 
   const handleWakeUp = useCallback(({ passiveEarned, passiveSeconds }: {
@@ -24,7 +24,7 @@ export function LifecycleProvider({ children }: { children: ReactNode }) {
         return { ...prev, coins: prev.coins + passiveEarned }
       })
     }
-  }, [])
+  }, [showModal, setUser])
 
   useAppLifecycle({ onWakeUp: handleWakeUp })
 

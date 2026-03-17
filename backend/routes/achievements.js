@@ -1,117 +1,103 @@
 const express = require('express')
 const router = express.Router()
+const { default: mongoose } = require('mongoose')
+const auth = require('../middleware/auth')
 const Achievement = require('../models/Achievement')
 const User = require('../models/User')
-const { grantAchievements, PRESTIGE_FIELDS } = require('../services/achievementService')
-const auth = require('../middleware/auth')
-const { calcPrestigeMultiplier } = require('../services/expressions')
-const { formatNumber } = require('../utils/formatNumber')
+const UserAchievements = require('../models/UserAchievements')
+const { grantAchievements } = require('../services/achievementService')
+const { computeStats } = require('../services/statsService')
 
-/**
- * GET /achievements
- * Получить все достижения с прогрессом пользователя
- */
+// Получить все достижения
 router.get('/', auth, async (req, res) => {
   try {
-    const [allAchievements, user] = await Promise.all([
-      Achievement.find({}).lean(),
-      User.findById(req.user.id).lean()
-    ])
+    const achievements = await Achievement.find()
 
-    if (!user) {
-      return res.status(404).json({ error: 'Пользователь не найден' })
-    }
-
-    const multiplier = calcPrestigeMultiplier(user.prestige ?? 0)
-
-    const unlockedMap = new Map(
-      user.achievements.map(a => [a._id.toString(), a])
-    )
-
-    const achievementsWithStatus = allAchievements.map(achievement => {
-      const id = achievement._id.toString()
-      const isCoinBased = PRESTIGE_FIELDS.has(achievement.condition.field)
-
-      const scaledValue = isCoinBased
-        ? Math.round(achievement.condition.value * multiplier)
-        : achievement.condition.value
-
-      return {
-        ...achievement,
-        description: isCoinBased
-          ? `Накопить ${formatNumber(scaledValue)} монет`
-          : achievement.description,
-        condition: {
-          ...achievement.condition,
-          value: scaledValue
-        },
-        reward: {
-          ...achievement.reward,
-          coins: Math.round(achievement.reward.coins * multiplier)
-        },
-        unlocked: unlockedMap.has(id),
-        unlockedAt: unlockedMap.get(id)?.unlockedAt || null
-      }
-    })
-
-    res.json({
-      success: true,
-      total: allAchievements.length,
-      unlocked: unlockedMap.size,
-      prestige: user.prestige ?? 0,
-      achievements: achievementsWithStatus
-    })
-
+    res.json(achievements)
   } catch (error) {
-    console.error('GET /achievements error:', error)
-    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+    console.log('Error: ', error.message)
+    
+    res.status(500).json({ message: 'Ошибка сервера' })
   }
 })
 
-/**
- * POST /achievements/check
- * Проверить и выдать новые достижения
- * Вызывается после клика / покупки / любого действия
- */
-router.post('/check', auth, async (req, res) => {
+// Получить все достижения пользователя
+router.get('/user', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
+    const userId = new mongoose.Types.ObjectId(req.user.id)
+    
+    const userAchievements = await UserAchievements.find({ user: userId })
+      .populate('achievement', 'title description condition reward')
+
+    res.json(userAchievements)
+  } catch (error) {
+    console.log(error.message)
+    
+    res.status(500).json({ message: 'Ошибка сервера' })
+  }
+})
+
+// Проверить и получить достижения
+router.post('/check', auth, async (req, res) => {
+  const userId = new mongoose.Types.ObjectId(req.user.id)
+  
+  try {
+    const user = await User.findById(userId)
 
     if (!user) {
       return res.status(404).json({ error: 'Пользователь не найден' })
     }
 
-    const multiplier = calcPrestigeMultiplier(user.prestige ?? 0)
+    const { prestigeMultiplier } = await computeStats(userId)
 
-    const newAchievements = await grantAchievements(user)
+    const achievements = await grantAchievements(user, prestigeMultiplier)
 
-    res.json({
-      success: true,
-      newAchievements: newAchievements.map(a => {
-        const isCoinBased = PRESTIGE_FIELDS.has(a.condition.field)
+    res.json(achievements)
+  } catch (error) {
+    console.log(error)
 
-        const scaledValue = isCoinBased
-          ? Math.round(a.condition.value * multiplier)
-          : a.condition.value
+    res.status(500).json({ error: 'Ошибка сервера' })
+  }
+})
 
-        return {
-          _id: a._id,
-          title: a.title,
-          description: isCoinBased
-            ? `Накопить ${formatNumber(scaledValue)} монет`
-            : a.description,
-          reward: {
-            ...a.reward,
-            coins: Math.round(a.reward.coins * multiplier)
-          }
-        }
-      }),
-      hasNew: newAchievements.length > 0
+// Получить конкретное достижение
+router.post('/receive/:achievementId', auth, async (req, res) => {
+  try {
+    const userId = req.user.id
+    const { achievementId } = req.params
+
+    const [achievement, user, existingUserAchievement ] = await Promise.all([
+      Achievement.findById(achievementId),
+      User.findById(userId),
+      UserAchievements.findOne({ user: userId, achievement: achievementId })
+    ])
+
+    if (!achievement) {
+      return res.status(404).json({ message: 'Достижение не найдено' })
+    }
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден' })
+    }
+
+    if (existingUserAchievement) {
+      return res.status(400).json({ message: 'Достижение уже получено' })
+    }
+
+    const newUserAchievement = new UserAchievements({
+      user: userId,
+      achievement: achievementId
     })
 
+    await Promise.all([user.save(), newUserAchievement.save()])
+
+    res.json({
+      message: `Достижение "${achievement.name}" получено`,
+      userAchievement: newUserAchievement
+    })
   } catch (error) {
-    console.error('POST /achievements/check error:', error)
-    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
+    console.log(error.message)
+
+    res.status(500).json({ message: 'Ошибка сервера' })
   }
 })
 

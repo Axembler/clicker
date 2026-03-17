@@ -1,10 +1,10 @@
 import { memo } from "react"
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
-import { Branch, SkillNode, SkillNodeStatus } from "@/types/skills"
+import { Skill, SkillNode, SkillNodeStatus } from "@/types/skills"
 
-export const SkillNodeCard = memo(({ node, branch, status, level, onPress }: {
+export const SkillNodeCard = memo(({ node, skill, status, level, onPress }: {
   node: SkillNode
-  branch: Branch
+  skill: Skill
   status: SkillNodeStatus
   level: number
   onPress: () => void
@@ -19,14 +19,14 @@ export const SkillNodeCard = memo(({ node, branch, status, level, onPress }: {
       activeOpacity={0.7}
       style={[
         styles.nodeCard,
-        { borderColor: isLocked ? '#E5E7EB' : branch.color + '40' },
-        isMaxed && { backgroundColor: branch.bgColor },
-        status === 'partial' && { borderColor: branch.color + '80' },
+        { borderColor: isLocked ? '#E5E7EB' : skill.color + '40' },
+        isMaxed && { backgroundColor: skill.bgColor },
+        status === 'partial' && { borderColor: skill.color + '80' },
       ]}
     >
       <View style={[
         styles.nodeIcon,
-        { backgroundColor: isLocked ? '#F3F4F6' : branch.bgColor },
+        { backgroundColor: isLocked ? '#F3F4F6' : skill.bgColor },
       ]}>
         <Text style={[styles.nodeEmoji, isLocked && { opacity: 0.4 }]}>
           {node.emoji}
@@ -38,7 +38,7 @@ export const SkillNodeCard = memo(({ node, branch, status, level, onPress }: {
           style={[
             styles.nodeName,
             isLocked && { color: '#9CA3AF' },
-            isMaxed && { color: branch.color },
+            isMaxed && { color: skill.color },
           ]}
           numberOfLines={1}
         >
@@ -58,7 +58,7 @@ export const SkillNodeCard = memo(({ node, branch, status, level, onPress }: {
                 key={i}
                 style={[
                   styles.levelDot, 
-                  { backgroundColor: i < level ? branch.color : branch.color + '25' }
+                  { backgroundColor: i < level ? skill.color : skill.color + '25' }
                 ]}
               />
             ))}
@@ -68,10 +68,10 @@ export const SkillNodeCard = memo(({ node, branch, status, level, onPress }: {
         <View style={[
           styles.statusBadge,
           isMaxed
-            ? { backgroundColor: branch.color }
+            ? { backgroundColor: skill.color }
             : isLocked
             ? { backgroundColor: '#F3F4F6' }
-            : { backgroundColor: branch.bgColor },
+            : { backgroundColor: skill.bgColor },
         ]}>
           <Text style={[
             styles.statusText,
@@ -79,7 +79,7 @@ export const SkillNodeCard = memo(({ node, branch, status, level, onPress }: {
               ? { color: '#fff' }
               : isLocked
               ? { color: '#9CA3AF' }
-              : { color: branch.color },
+              : { color: skill.color },
           ]}>
             {isMaxed ? 'MAX' : isLocked ? '🔒' : `${node.cost} ОТ`}
           </Text>

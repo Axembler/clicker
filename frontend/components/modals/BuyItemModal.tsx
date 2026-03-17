@@ -1,18 +1,31 @@
 import { formatNumber } from '@/helpers/formatNumber'
-import { ShopItemData } from '@/types/shop'
+import { Item } from '@/types/shop'
+import { useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 
 interface BuyItemModalProps {
-  item: ShopItemData,
+  item: Item,
   owned: boolean,
   notEnoughCoins: boolean,
-  onConfirm: (item: ShopItemData) => void
+  onConfirm: (item: Item) => Promise<void>
   onCancel: () => void
 }
 
 export function BuyItemModal({ item, onConfirm, onCancel, owned, notEnoughCoins }: BuyItemModalProps) {
+  const [isLoading, setIsLoading] = useState(false)
+
   const isDisabled = owned || notEnoughCoins
   const buttonText = owned ? 'Куплено ✓' : 'Купить'
+
+  const handleConfirm = async (item: Item) => {
+    try {
+      setIsLoading(true)
+
+      await onConfirm(item)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -40,14 +53,14 @@ export function BuyItemModal({ item, onConfirm, onCancel, owned, notEnoughCoins 
             <Text style={styles.cancelText}>Отмена</Text>
           </TouchableOpacity>
 
-          {isDisabled ? (
+          {(isDisabled || isLoading) ? (
             <View style={[styles.confirmButton, styles.confirmButtonDisabled]}>
               <Text style={styles.confirmText}>{buttonText}</Text>
             </View>
           ) : (
             <TouchableOpacity
               style={styles.confirmButton}
-              onPress={() => onConfirm(item)}
+              onPress={() => handleConfirm(item)}
               activeOpacity={0.8}
             >
               <Text style={styles.confirmText}>{buttonText}</Text>

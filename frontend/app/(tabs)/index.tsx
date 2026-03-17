@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, GestureResponderEvent, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useAuth } from '@/context/auth-context'
-import { useUserContext } from '@/context/user-context'
+import { useUser } from '@/context/user-context'
 import { formatNumber } from '@/helpers/formatNumber'
 import { useClickBatcher } from '@/hooks/use-click-batcher'
 import { incrementCounter } from '@/services/counter'
@@ -13,10 +13,10 @@ import { useNotification } from '@/context/notification-context'
 import { getErrorMessage } from '@/utils/getErrorMessage'
 import { useFloatingNumbers } from '@/hooks/use-floating-numbers'
 import { FloatingNumbers } from '@/components/FloatingNumbers'
-import { calcPrestigeMultiplier } from '@/utils/calcPrestigeMultiplier'
 import { ErrorBanner } from '@/components/ui/ErrorBanner'
 import { LoadingBanner } from '@/components/ui/LoadingBanner'
 import { MainLayout } from '@/components/layouts/MainLayout'
+import { useStats } from '@/hooks/use-stats'
 
 type LocalStats = {
   localClicks: number
@@ -25,21 +25,22 @@ type LocalStats = {
 
 export default function HomeScreen() {
   const { notify } = useNotification()
-  const { floatingNumbers, spawnNumber } = useFloatingNumbers()
-  const { signOut } = useAuth()
   const { showModal, hideModal } = useModal()
+  const { floatingNumbers, spawnNumber } = useFloatingNumbers()
   const { enqueue } = useAchievementQueue()
-  const { user, isLoading, error, setUser, refetchUser } = useUserContext()
+  const { signOut } = useAuth()
+  const { user, isLoading, error, setUser, refetchUser } = useUser()
+  const { stats: serverStats, refetchData: refetchStats } = useStats()
 
-  const isInitialized = useRef(false)
+  const passiveIncome = serverStats?.passiveIncome ?? 0
+  const clickPower = serverStats?.clickPower ?? 1
+
+  const isInitialized = useRef<boolean>(false)
   const prevCoinsRef = useRef<number | null>(null)
   const pendingClicksRef = useRef(0)
   const containerRef = useRef<View>(null)
 
   const [stats, setStats] = useState<LocalStats>({ localClicks: 0, localCoins: 0 })
-  
-  const clickPower = user?.clickPower ?? 1
-  const prestigeMultiplier = calcPrestigeMultiplier(user?.prestige ?? 0)
 
   const activeDots = useMemo(
     () => (stats.localClicks % 5 === 0 && stats.localClicks > 0 ? 5 : stats.localClicks % 5),
@@ -77,70 +78,80 @@ export default function HomeScreen() {
 
       setStats({
         localClicks: clicks + pendingClicksRef.current,
-        localCoins: coins + pendingClicksRef.current * clickPower * prestigeMultiplier,
+        localCoins: coins + (pendingClicksRef.current * clickPower),
       })
 
-      setUser((prev) => prev ? { ...prev, coins } : null)
-
+      setUser((prev) => (prev ? { ...prev, coins } : null))
+      
       prevCoinsRef.current = coins
 
-      const { newAchievements } = await checkAchievements()
+      const newAchievements = await checkAchievements()
 
       if (newAchievements.length > 0) {
         enqueue(newAchievements)
-        
-        await refetchUser()
+
+        await Promise.all([refetchUser(), refetchStats()])
       }
     } catch (error) {
       pendingClicksRef.current = Math.max(0, pendingClicksRef.current - batchSize)
 
       setStats({
         localClicks: (user?.clicks ?? 0) + pendingClicksRef.current,
-        localCoins: (user?.coins ?? 0) + pendingClicksRef.current * clickPower * prestigeMultiplier,
+        localCoins: (user?.coins ?? 0) + (pendingClicksRef.current * clickPower),
       })
 
       notify('error', getErrorMessage(error))
     }
   })
 
-  const increment = useCallback(async (event: GestureResponderEvent) => {
-    const { locationX, locationY } = event.nativeEvent
+  const localClicksRef = useRef(stats.localClicks)
 
-    pendingClicksRef.current += 1
+  useEffect(() => {
+    localClicksRef.current = stats.localClicks
+  }, [stats.localClicks])
 
-    containerRef.current?.measure((_x, _y, _w, _h, pageX, pageY) => {
-      spawnNumber(
-        pageX + locationX,
-        pageY + locationY - 20,
-        `+${clickPower * prestigeMultiplier}`
-      )
-    })
+  const increment = useCallback(
+    async (event: GestureResponderEvent) => {
+      const { locationX, locationY } = event.nativeEvent
 
-    setStats((prev) => ({
-      localClicks: prev.localClicks + 1,
-      localCoins: prev.localCoins + (clickPower * prestigeMultiplier),
-    }))
+      pendingClicksRef.current += 1
 
-    pulse()
-    registerClick()
-  }, [pulse, registerClick, user?.clickPower, user?.prestige, spawnNumber])
+      containerRef.current?.measure((_x, _y, _w, _h, pageX, pageY) => {
+        spawnNumber(
+          pageX + locationX,
+          pageY + locationY - 20,
+          `+${clickPower}`
+        )
+      })
+
+      setStats((prev) => ({
+        localClicks: prev.localClicks + 1,
+        localCoins: prev.localCoins + clickPower,
+      }))
+
+      pulse()
+      registerClick()
+    },
+    [pulse, registerClick, spawnNumber, clickPower]
+  )
 
   useEffect(() => {
     if (!user) return
 
-    // Первичная инициализация
     if (!isInitialized.current) {
       setStats({ localClicks: user.clicks, localCoins: user.coins })
+      
       isInitialized.current = true
+      
       prevCoinsRef.current = user.coins
+      
       return
     }
 
-    // Если coins изменились извне
     if (prevCoinsRef.current !== user.coins) {
       setStats((prev) => ({
         ...prev,
-        localCoins: user.coins + pendingClicksRef.current * clickPower * prestigeMultiplier
+        localCoins: user.coins + (pendingClicksRef.current * clickPower)
       }))
       prevCoinsRef.current = user.coins
     }
@@ -168,7 +179,7 @@ export default function HomeScreen() {
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statEmoji}>⚡</Text>
-            <Text style={styles.statValue}>{formatNumber(clickPower * prestigeMultiplier)}</Text>
+            <Text style={styles.statValue}>{formatNumber(clickPower)}</Text>
             <Text style={styles.statLabel}>за клик</Text>
           </View>
 
@@ -176,7 +187,7 @@ export default function HomeScreen() {
 
           <View style={styles.statCard}>
             <Text style={styles.statEmoji}>💰</Text>
-            <Text style={styles.statValue}>{user ? formatNumber(user.passiveIncome * prestigeMultiplier) : "-"}</Text>
+            <Text style={styles.statValue}>{user ? formatNumber(passiveIncome) : "-"}</Text>
             <Text style={styles.statLabel}>в секунду</Text>
           </View>
 

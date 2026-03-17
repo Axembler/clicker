@@ -1,16 +1,5 @@
 const mongoose = require('mongoose')
 
-const userAchievementSchema = new mongoose.Schema({
-  unlockedAt: {
-    type: Date,
-    default: Date.now
-  },
-  title: {
-    type: String,
-    required: true
-  }
-})
-
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -30,10 +19,6 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  clickPower: {
-    type: Number,
-    default: 1,
-  },
   coins: {
     type: Number,
     default: 0,
@@ -41,14 +26,6 @@ const userSchema = new mongoose.Schema({
   totalCoins: {
     type: Number,
     default: 0,
-  },
-  passiveIncome: {
-    type: Number,
-    default: 0,
-  },
-  items: {
-    type: Array,
-    default: [],
   },
   lastOnline: {
     type: Date,
@@ -58,24 +35,17 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  achievements: {
-    type: [userAchievementSchema],
-    default: []
-  },
   prestige: {
+    type: Number,
+    default: 0
+  },
+  skillPoints: {
     type: Number,
     default: 0
   }
 }, {
   collection: 'users'
 })
-
-userSchema.virtual('prestigeMultiplier').get(function () {
-  return Math.max(1, this.prestige ** 2 * (this.prestige + 1))
-})
-
-userSchema.set('toJSON', { virtuals: true })
-userSchema.set('toObject', { virtuals: true })
 
 // Индексы для быстрой сортировки по рекордам
 userSchema.index({ totalClicks: -1 })

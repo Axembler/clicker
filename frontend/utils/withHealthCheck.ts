@@ -10,7 +10,7 @@ export class ServerUnavailableError extends Error {
 
 export const withHealthCheck = <T extends unknown[], R>(
   fn: (...args: T) => Promise<R>
-) => {
+): ((...args: T) => Promise<R>) => {
   return async (...args: T): Promise<R> => {
     const isHealthy = await checkHealth()
 

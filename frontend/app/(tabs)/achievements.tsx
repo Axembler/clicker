@@ -1,27 +1,42 @@
 import { View, Text, ScrollView, StyleSheet, DimensionValue, TouchableOpacity } from 'react-native'
 import { memo, useMemo } from 'react'
-import { Achievement } from '@/types/achievements'
+import { Achievement, UserAchievement } from '@/types/achievements'
 import { useAchievements } from '@/hooks/use-achievements'
 import { formatDate } from '@/helpers/formatDate'
 import { usePrestige } from '@/hooks/use-prestige'
 import { formatNumber } from '@/helpers/formatNumber'
 import { LoadingBanner } from '@/components/ui/LoadingBanner'
 import { MainLayout } from '@/components/layouts/MainLayout'
+import { useUserAchievements } from '@/hooks/use-user-achievements'
 
 export default function Achievements() {
-  const { data, total, unlocked, isLoading } = useAchievements()
+  const { data: achievements, total, isLoading } = useAchievements()
+  const { userAchievements, refetchUserAchievements } = useUserAchievements()
   const { openPrestigeModal } = usePrestige()
 
-  const isInitialLoading = isLoading && !data
+  const userAchievementsMap = useMemo(() => {
+    if (!userAchievements) return new Map<string, UserAchievement>()
+
+    return new Map(
+      userAchievements.map((ua) => [ua.achievement._id, ua])
+    )
+  }, [userAchievements])
+
+  const unlocked = userAchievementsMap.size
+
+  const isInitialLoading = isLoading && !achievements
 
   const progressPercent = useMemo(() => {
-    if (!data) return 0
+    if (!achievements || total === 0) return 0
 
-    return total > 0 ? Math.round((unlocked / total) * 100) : 0
-  }, [data])
+    return Math.floor((unlocked / total) * 100)
+  }, [unlocked, total, achievements])
 
   const progressBarStyle = useMemo(
-    () => [styles.progressBarFill, { width: `${progressPercent}%` as DimensionValue }],
+    () => [
+      styles.progressBarFill,
+      { width: `${progressPercent}%` as DimensionValue },
+    ],
     [progressPercent]
   )
 
@@ -32,7 +47,7 @@ export default function Achievements() {
           <View>
             <Text style={styles.headerTitle}>Достижения</Text>
 
-            {data && unlocked === total ? (
+            {achievements && unlocked === total ? (
               <TouchableOpacity
                 style={styles.allUnlockedButton}
                 onPress={openPrestigeModal}
@@ -52,7 +67,7 @@ export default function Achievements() {
             
             {isInitialLoading ? (
               <Text style={styles.progressBadgeValue}>...</Text>
-            ) : data ? (
+            ) : achievements ? (
               <Text style={styles.progressBadgeValue}>
                 🏆 {progressPercent}%
               </Text>
@@ -62,7 +77,7 @@ export default function Achievements() {
           </View>
         </View>
 
-        {data && (
+        {achievements && (
           <View style={styles.progressBarContainer}>
             <View style={progressBarStyle} />
           </View>
@@ -75,8 +90,12 @@ export default function Achievements() {
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
         >
-          {data?.map((achievement: Achievement) => (
-            <AchievementCard key={achievement._id} achievement={achievement} />
+          {achievements?.map((achievement: Achievement) => (
+            <AchievementCard
+              key={achievement._id}
+              achievement={achievement}
+              userAchievement={userAchievementsMap.get(achievement._id)}
+            />
           ))}
         </ScrollView>
       }
@@ -84,37 +103,55 @@ export default function Achievements() {
   )
 }
 
-const AchievementCard = memo(({ achievement }: { achievement: Achievement}) => {
-  const { unlocked, title, description, reward, unlockedAt } = achievement
+interface AchievementCardProps {
+  achievement: Achievement
+  userAchievement?: UserAchievement
+}
+
+const AchievementCard = memo(({ achievement, userAchievement }: AchievementCardProps) => {
+  const { title, description, reward } = achievement
+
+  const isUnlocked = !!userAchievement
+  const unlockedAt = userAchievement?.unlockedAt
 
   return (
-    <View style={[styles.card, unlocked && styles.cardUnlocked]}>
-      <View style={[styles.iconContainer, unlocked ? styles.iconUnlocked : styles.iconLocked]}>
-        <Text style={styles.iconEmoji}>{unlocked ? '🏆' : '🔒'}</Text>
+    <View style={[styles.card, isUnlocked && styles.cardUnlocked]}>
+      <View
+        style={[
+          styles.iconContainer,
+          isUnlocked ? styles.iconUnlocked : styles.iconLocked,
+        ]}
+      >
+        <Text style={styles.iconEmoji}>{isUnlocked ? '🏆' : '🔒'}</Text>
       </View>
 
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
           <Text
-            style={[styles.cardTitle, !unlocked && styles.textMuted]}
+            style={[styles.cardTitle, !isUnlocked && styles.textMuted]}
             numberOfLines={1}
           >
             {title ?? description}
           </Text>
 
-          <View style={[styles.rewardBadge, unlocked && styles.rewardBadgeUnlocked]}>
-            <Text style={[styles.rewardText, unlocked && styles.rewardTextUnlocked]}>
+          <View style={[styles.rewardBadge, isUnlocked && styles.rewardBadgeUnlocked]}>
+            <Text style={[styles.rewardText, isUnlocked && styles.rewardTextUnlocked]}>
               🪙 {formatNumber(reward.coins)}
             </Text>
           </View>
         </View>
 
-        <Text style={[styles.cardDescription, !unlocked && styles.textMuted]} numberOfLines={2}>
+        <Text
+          style={[styles.cardDescription, !isUnlocked && styles.textMuted]}
+          numberOfLines={2}
+        >
           {description}
         </Text>
 
-        {unlocked && unlockedAt && (
-          <Text style={styles.unlockedDate}>Открыто {formatDate(unlockedAt)}</Text>
+        {isUnlocked && unlockedAt && (
+          <Text style={styles.unlockedDate}>
+            Открыто {formatDate(unlockedAt)}
+          </Text>
         )}
       </View>
     </View>

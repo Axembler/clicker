@@ -1,12 +1,18 @@
+const { default: mongoose } = require('mongoose')
 const User = require('../models/User')
-const { calcPrestigeMultiplier } = require('../services/expressions')
+const { computeStats } = require('../services/statsService')
 
-const MAX_OFFLINE_HOURS = 8
+const MAX_OFFLINE_HOURS = 12
 const MIN_OFFLINE_SECONDS = 4
 
 const passiveIncome = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id)
+    const userId = new mongoose.Types.ObjectId(req.user.id)
+
+    const [user, { passiveIncome }] = await Promise.all([
+      User.findById(userId),
+      computeStats(userId)
+    ])
 
     if (!user) {
       return res.status(404).json({ message: 'Пользователь не найден' })
@@ -16,8 +22,6 @@ const passiveIncome = async (req, res, next) => {
 
     const serverLastOnline = user.lastOnline ? new Date(user.lastOnline) : null
 
-    // Клиент присылает fallbackSleepAt — время, когда приложение ушло в фон
-    // Это нужно, если /sleep не успел выполниться до убийства процесса
     const clientFallback = req.body?.fallbackSleepAt
       ? new Date(req.body.fallbackSleepAt)
       : null
@@ -35,13 +39,13 @@ const passiveIncome = async (req, res, next) => {
     }
 
     // Подсчет пассивного дохода
-    if (sleepAt && user.passiveIncome > 0) {
+    if (sleepAt && passiveIncome > 0) {
       const diffSeconds = Math.floor((now - sleepAt) / 1000)
 
       if (diffSeconds >= MIN_OFFLINE_SECONDS) {
         const maxSeconds = MAX_OFFLINE_HOURS * 3600
         const effectiveSeconds = Math.min(diffSeconds, maxSeconds)
-        const earned = Math.floor(user.passiveIncome * calcPrestigeMultiplier(user.prestige) * effectiveSeconds)
+        const earned = Math.floor(passiveIncome * effectiveSeconds)
 
         if (earned > 0) {
           user.coins += earned
@@ -59,11 +63,12 @@ const passiveIncome = async (req, res, next) => {
     }
 
     user.lastOnline = now
+    
     await user.save()
 
     req.userDoc = user
-    next()
 
+    next()
   } catch (err) {
     console.error('Ошибка passiveIncome middleware:', err)
     res.status(500).json({ message: 'Ошибка сервера' })

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
-import { Achievement, AchievementsResponse } from '@/types/achievements'
+import { Achievement } from '@/types/achievements'
 import { getAchievements } from '@/services/achievements'
 import { useNotification } from '@/context/notification-context'
 import { getErrorMessage } from '@/utils/getErrorMessage'
@@ -16,7 +16,7 @@ const sortAchievements = (achievements: Achievement[] | undefined): Achievement[
 export function useAchievements() {
   const { notify } = useNotification()
 
-  const [data, setData] = useState<AchievementsResponse | null>(null)
+  const [data, setData] = useState<Achievement[] | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   const fetchAchievements = useCallback(async () => {
@@ -25,15 +25,15 @@ export function useAchievements() {
     try {
       const result = await getAchievements()
       setData(result)
-    } catch {
-      notify('error', getErrorMessage('Не удалось загрузить достижения'))
+    } catch (error) {
+      notify('error', getErrorMessage(error))
     } finally {
       setIsLoading(false)
     }
   }, [notify])
 
   const sortedAchievements = useMemo(
-    () => (data ? sortAchievements(data.achievements) : null),
+    () => (data ? sortAchievements(data) : null),
     [data]
   )
 
@@ -45,8 +45,7 @@ export function useAchievements() {
 
   return {
     data: sortedAchievements,
-    total: data?.total ?? 0,
-    unlocked: data?.unlocked ?? 0,
+    total: data?.length ?? 0,
     isLoading
   }
 }

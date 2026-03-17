@@ -18,7 +18,7 @@ export const PassiveIncomeModal = ({ earned, seconds }: Props) => {
   const hideModalHandler = async () => {
     hideModal()
 
-    const { newAchievements } = await checkAchievements()
+    const newAchievements = await checkAchievements()
       
     if (newAchievements.length > 0) {
       setTimeout(() => {

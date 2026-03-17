@@ -9,6 +9,10 @@ const itemsRoutes = require('./routes/items')
 const userRoutes = require('./routes/user')
 const recordsRoutes = require('./routes/records')
 const achievementsRoutes = require('./routes/achievements')
+const skillsRoutes = require('./routes/skills')
+const statsRoutes = require('./routes/stats')
+const sessionRoutes = require('./routes/session')
+const prestigeRoutes = require('./routes/prestige')
 
 const app = express()
 
@@ -23,10 +27,14 @@ mongoose.connect(process.env.MONGO_URI)
 // Роуты
 app.use('/counter', counterRoutes)
 app.use('/auth', authRoutes)
-app.use('/items', itemsRoutes)
 app.use('/user', userRoutes)
 app.use('/records', recordsRoutes)
 app.use('/achievements', achievementsRoutes)
+app.use('/items', itemsRoutes)
+app.use('/skills', skillsRoutes)
+app.use('/stats', statsRoutes)
+app.use('/session', sessionRoutes)
+app.use('/prestige', prestigeRoutes)
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' })

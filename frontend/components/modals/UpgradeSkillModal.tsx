@@ -1,29 +1,41 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import { Branch, SkillNode } from '@/types/skills'
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
+import { Skill, SkillNode } from '@/types/skills'
+import { useState } from 'react'
 
 interface Props {
   node: SkillNode | null
-  branch: Branch | null
+  skill: Skill | null
   level: number
   status: 'locked' | 'available' | 'partial' | 'maxed'
   onCancel: () => void
-  onConfirm: () => void
+  onConfirm: () => Promise<void>
 }
 
-export const UpgradeSkillModal = ({ node, branch, level, status, onCancel, onConfirm }: Props) => {
-  if (!node || !branch) return null
+export const UpgradeSkillModal = ({ node, skill, level, status, onCancel, onConfirm }: Props) => {
+  if (!node || !skill) return null
+
+  const [isLoading, setIsLoading] = useState(false)
 
   const canUpgrade = status === 'available' || status === 'partial'
 
+  const handleConfirm = async () => {
+    try {
+      setIsLoading(true)
+      await onConfirm()
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <View style={styles.modalCard}>
-      <View style={[styles.modalHeader, { backgroundColor: branch.bgColor }]}>
+      <View style={[styles.modalHeader, { backgroundColor: skill.bgColor }]}>
         <Text style={styles.modalEmoji}>{node.emoji}</Text>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.modalTitle, { color: branch.color }]}>
+          <Text style={[styles.modalTitle, { color: skill.color }]}>
             {node.name}
           </Text>
-          <Text style={styles.modalBranch}>{branch.label}</Text>
+          <Text style={styles.modalBranch}>{skill.label}</Text>
         </View>
         <TouchableOpacity onPress={onCancel} style={styles.closeBtn}>
           <Text style={styles.closeBtnText}>✕</Text>
@@ -43,7 +55,7 @@ export const UpgradeSkillModal = ({ node, branch, level, status, onCancel, onCon
                 styles.progressBarFill,
                 {
                   width: `${(level / node.maxLevel) * 100}%`,
-                  backgroundColor: branch.color
+                  backgroundColor: skill.color
                 }
               ]}
             />
@@ -61,23 +73,27 @@ export const UpgradeSkillModal = ({ node, branch, level, status, onCancel, onCon
         <TouchableOpacity
           style={[
             styles.upgradeBtn,
-            { backgroundColor: canUpgrade ? branch.color : '#E5E7EB' }
+            { backgroundColor: canUpgrade && !isLoading ? skill.color : '#E5E7EB' }
           ]}
-          disabled={!canUpgrade}
-          onPress={onConfirm}
+          disabled={!canUpgrade || isLoading}
+          onPress={handleConfirm}
         >
-          <Text
-            style={[
-              styles.upgradeBtnText,
-              { color: canUpgrade ? '#fff' : '#9CA3AF' },
-            ]}
-          >
-            {canUpgrade
-              ? `Улучшить (${node.cost} ОТ)`
-              : status === 'maxed'
-              ? '✅ Максимальный уровень'
-              : '🔒 Заблокировано'}
-          </Text>
+          {isLoading ? (
+            <ActivityIndicator color={skill.color} />
+          ) : (
+            <Text
+              style={[
+                styles.upgradeBtnText,
+                { color: canUpgrade ? '#fff' : '#e1e1e1' },
+              ]}
+            >
+              {canUpgrade
+                ? `Улучшить (${node.cost} ОТ)`
+                : status === 'maxed'
+                ? '✅ Максимальный уровень'
+                : '🔒 Заблокировано'}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

@@ -1,4 +1,6 @@
-export type AchievementConditionField =
+import { UserData } from "./user"
+
+type AchievementConditionField =
   | 'clicks'
   | 'coins'
   | 'totalCoins'
@@ -6,15 +8,15 @@ export type AchievementConditionField =
   | 'passiveIncome'
   | 'items'
 
-export type AchievementConditionOperator = 'gte' | 'lte' | 'eq' | 'length_gte'
+type AchievementConditionOperator = 'gte' | 'lte' | 'eq' | 'length_gte'
 
-export interface AchievementCondition {
+interface AchievementCondition {
   field: AchievementConditionField
   operator: AchievementConditionOperator
   value: number
 }
 
-export interface AchievementReward {
+interface AchievementReward {
   coins: number
 }
 
@@ -24,28 +26,17 @@ export interface Achievement {
   description: string
   condition: AchievementCondition
   reward: AchievementReward
-  createdAt: string
-  updatedAt: string
-  unlocked: boolean
-  unlockedAt: string | null
 }
 
-export interface AchievementsResponse {
-  success: boolean
-  total: number
-  unlocked: number
-  achievements: Achievement[]
-}
-
-export interface CheckedAchievement {
+export interface UserAchievement {
   _id: string
-  title: string | null
-  description: string
-  reward: AchievementReward
-}
-
-export interface CheckAchievementsResponse {
-  success: boolean
-  newAchievements: CheckedAchievement[]
-  hasNew: boolean
+  user: Pick<UserData, '_id' | 'username'>
+  achievement: Pick<Achievement,
+    '_id' |
+    'title' |
+    'condition' |
+    'reward' |
+    'description'
+  >
+  unlockedAt: string
 }

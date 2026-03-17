@@ -1,16 +1,40 @@
 const Achievement = require('../models/Achievement')
-const { calcPrestigeMultiplier } = require('../services/expressions')
+const UserAchievements = require('../models/UserAchievements')
+const UserItems = require('../models/UserItems')
+const { PRESTIGE_FIELDS } = require('../constants/achievementConstants')
 
-// Поля, которые масштабируются престижем
-const PRESTIGE_FIELDS = new Set(['coins'])
+const EXTERNAL_FIELDS = {
+  items: (userId) => UserItems.find({ user: userId }).lean(),
+}
 
-/**
- * Проверяет одно условие достижения
- */
-const checkCondition = (user, condition, prestigeMultiplier = 1) => {
+const buildUserContext = async (user, achievements) => {
+  const requiredFields = new Set(achievements.map((a) => a.condition.field))
+
+  const context = user.toObject ? user.toObject() : { ...user }
+
+  const externalFetches = []
+
+  for (const field of requiredFields) {
+    if (EXTERNAL_FIELDS[field]) {
+      externalFetches.push(
+        EXTERNAL_FIELDS[field](user._id).then((data) => ({ field, data }))
+      )
+    }
+  }
+
+  const externalResults = await Promise.all(externalFetches)
+
+  for (const { field, data } of externalResults) {
+    context[field] = data
+  }
+
+  return context
+}
+
+const checkCondition = (userContext, condition, prestigeMultiplier) => {
   const { field, operator, value } = condition
 
-  const userValue = user[field]
+  const userValue = userContext[field]
 
   if (userValue === undefined || userValue === null) return false
 
@@ -33,77 +57,72 @@ const checkCondition = (user, condition, prestigeMultiplier = 1) => {
       return userValue.length >= effectiveValue
 
     default:
-      console.warn(`Неизвестный оператор: ${operator}`)
       return false
   }
 }
 
-/**
- * Проверяет все достижения для пользователя
- * Возвращает список новых разблокированных достижений
- */
-const checkAchievements = async (user, prestigeMultiplier = 1) => {
+const checkAchievements = async (user, prestigeMultiplier) => {
   try {
-    const allAchievements = await Achievement.find({})
+    const [allAchievements, userAchievements] = await Promise.all([
+      Achievement.find(),
+      UserAchievements.find({ user: user._id }, { achievement: 1 }).lean(),
+    ])
 
-    const unlockedAchievements = new Set(
-      user.achievements.map(a => a._id.toString())
+    const unlockedIds = new Set(
+      userAchievements.map((ua) => ua.achievement.toString())
+    )
+    const lockedAchievements = allAchievements.filter(
+      (achievement) => !unlockedIds.has(achievement._id.toString())
     )
 
-    const newlyUnlocked = []
+    const userContext = await buildUserContext(user, lockedAchievements)
 
-    for (const achievement of allAchievements) {
-      if (unlockedAchievements.has(achievement._id.toString())) continue
-
-      if (checkCondition(user, achievement.condition, prestigeMultiplier)) {
-        newlyUnlocked.push(achievement)
-      }
-    }
+    const newlyUnlocked = lockedAchievements.filter((achievement) =>
+      checkCondition(userContext, achievement.condition, prestigeMultiplier)
+    )
 
     return newlyUnlocked
-
   } catch (error) {
-    console.error('Ошибка при проверке достижений:', error)
     throw error
   }
 }
 
-/**
- * Выдает новые достижения пользователю и начисляет награду
- */
-const grantAchievements = async (user) => {
-  const prestigeMultiplier = calcPrestigeMultiplier(user.prestige)
+const grantAchievements = async (user, prestigeMultiplier) => {
   const newlyUnlocked = await checkAchievements(user, prestigeMultiplier)
 
   if (newlyUnlocked.length === 0) return []
 
-  let totalReward = 0
+  const achievementDocs = newlyUnlocked.map((achievement) => ({
+    user: user._id,
+    achievement: achievement._id,
+    unlockedAt: new Date(),
+  }))
 
-  for (const achievement of newlyUnlocked) {
-    user.achievements.push({
-      _id: achievement._id,
-      unlockedAt: new Date(),
-      title: achievement.title
-    })
-
+  const totalReward = newlyUnlocked.reduce((sum, achievement) => {
     const reward = achievement.reward?.coins || 0
+    return sum + Math.floor(reward * prestigeMultiplier)
+  }, 0)
 
-    totalReward += Math.floor(reward * prestigeMultiplier)
-  }
+  const savePromises = [
+    UserAchievements.insertMany(achievementDocs, { ordered: false }),
+  ]
 
   if (totalReward > 0) {
     user.coins += totalReward
     user.totalCoins += totalReward
+    savePromises.push(user.save())
   }
 
-  await user.save()
+  await Promise.all(savePromises)
 
-  return newlyUnlocked
+  return newlyUnlocked.map((achievement) => ({
+    ...achievement.toObject(),
+    description: achievement.getDescription(prestigeMultiplier),
+    reward: {
+      ...achievement.reward,
+      coins: Math.floor(achievement.reward.coins * prestigeMultiplier),
+    },
+  }))
 }
 
-module.exports = {
-  checkCondition,
-  checkAchievements,
-  grantAchievements,
-  PRESTIGE_FIELDS
-}
+module.exports = { grantAchievements }

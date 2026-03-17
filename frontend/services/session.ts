@@ -1,18 +1,18 @@
-import { apiClient } from "@/utils/apiClient"
 import * as SecureStore from 'expo-secure-store'
+import { apiClient } from "@/utils/apiClient"
 import { withHealthCheck } from "@/utils/withHealthCheck"
-import { UserData } from "@/types/user"
+import { SessionData } from "@/types/session"
 
-const _wakeUp = async (): Promise<UserData> => {
+const _wakeUp = async (): Promise<SessionData> => {
   const localSleepAt = await SecureStore.getItemAsync('lastSleepAt')
 
-  const response = await apiClient('/user/wakeup', {
+  const response = await apiClient('/session/wakeup', {
     method: 'POST',
     body: JSON.stringify({
       fallbackSleepAt: localSleepAt ? Number(localSleepAt) : null
     })
   })
-
+  
   if (!response.ok) throw new Error('Ошибка wakeup')
 
   await SecureStore.deleteItemAsync('lastSleepAt')
@@ -22,14 +22,14 @@ const _wakeUp = async (): Promise<UserData> => {
   return data
 }
 
-const _sleep = async (): Promise<void> => {
+export const sleep = async (): Promise<void> => {
   const sleepAt = Date.now()
 
   await SecureStore.setItemAsync('lastSleepAt', String(sleepAt))
 
-  const response = await apiClient('/user/sleep', {
+  const response = await apiClient('/session/sleep', {
     method: 'POST',
-    body: JSON.stringify({ sleepAt })
+    body: JSON.stringify({ fallbackSleepAt: sleepAt })
   })
 
   if (!response.ok) {
@@ -38,4 +38,3 @@ const _sleep = async (): Promise<void> => {
 }
 
 export const wakeUp = withHealthCheck(_wakeUp)
-export const sleep = withHealthCheck(_sleep)
