@@ -35,7 +35,6 @@ const checkCondition = (userContext, condition, prestigeMultiplier) => {
   const { field, operator, value } = condition
 
   const userValue = userContext[field]
-
   if (userValue === undefined || userValue === null) return false
 
   const effectiveValue = PRESTIGE_FIELDS.has(field)
@@ -45,46 +44,37 @@ const checkCondition = (userContext, condition, prestigeMultiplier) => {
   switch (operator) {
     case 'gte':
       return userValue >= effectiveValue
-
     case 'lte':
       return userValue <= effectiveValue
-
     case 'eq':
       return userValue === effectiveValue
-
     case 'length_gte':
       if (!Array.isArray(userValue)) return false
       return userValue.length >= effectiveValue
-
     default:
       return false
   }
 }
 
 const checkAchievements = async (user, prestigeMultiplier) => {
-  try {
-    const [allAchievements, userAchievements] = await Promise.all([
-      Achievement.find(),
-      UserAchievements.find({ user: user._id }, { achievement: 1 }).lean(),
-    ])
+  const [allAchievements, userAchievements] = await Promise.all([
+    Achievement.find(),
+    UserAchievements.find({ user: user._id }, { achievement: 1 }).lean(),
+  ])
 
-    const unlockedIds = new Set(
-      userAchievements.map((ua) => ua.achievement.toString())
-    )
-    const lockedAchievements = allAchievements.filter(
-      (achievement) => !unlockedIds.has(achievement._id.toString())
-    )
+  const unlockedIds = new Set(
+    userAchievements.map((ua) => ua.achievement.toString())
+  )
 
-    const userContext = await buildUserContext(user, lockedAchievements)
+  const lockedAchievements = allAchievements.filter(
+    (achievement) => !unlockedIds.has(achievement._id.toString())
+  )
 
-    const newlyUnlocked = lockedAchievements.filter((achievement) =>
-      checkCondition(userContext, achievement.condition, prestigeMultiplier)
-    )
+  const userContext = await buildUserContext(user, lockedAchievements)
 
-    return newlyUnlocked
-  } catch (error) {
-    throw error
-  }
+  return lockedAchievements.filter((achievement) =>
+    checkCondition(userContext, achievement.condition, prestigeMultiplier)
+  )
 }
 
 const grantAchievements = async (user, prestigeMultiplier) => {
@@ -99,8 +89,8 @@ const grantAchievements = async (user, prestigeMultiplier) => {
   }))
 
   const totalReward = newlyUnlocked.reduce((sum, achievement) => {
-    const reward = achievement.reward?.coins || 0
-    return sum + Math.floor(reward * prestigeMultiplier)
+    const coins = achievement.reward?.coins || 0
+    return sum + Math.floor(coins * prestigeMultiplier)
   }, 0)
 
   const savePromises = [
@@ -115,14 +105,9 @@ const grantAchievements = async (user, prestigeMultiplier) => {
 
   await Promise.all(savePromises)
 
-  return newlyUnlocked.map((achievement) => ({
-    ...achievement.toObject(),
-    description: achievement.getDescription(prestigeMultiplier),
-    reward: {
-      ...achievement.reward,
-      coins: Math.floor(achievement.reward.coins * prestigeMultiplier),
-    },
-  }))
+  return newlyUnlocked.map((achievement) =>
+    achievement.applyPrestige(prestigeMultiplier)
+  )
 }
 
 module.exports = { grantAchievements }

@@ -14,18 +14,12 @@ router.get('/', auth, async (req, res) => {
 
     const [items, { prestigeMultiplier }] = await Promise.all([
       Item.find(),
-      computeStats(userId)
+      computeStats(userId),
     ])
 
-    const itemsWithPrestige = items.map((item) => ({
-      ...item.toObject(),
-      price: Math.floor(item.price * prestigeMultiplier),
-    }))
-
-    res.json(itemsWithPrestige)
+    res.json(items.map((item) => item.applyPrestige(prestigeMultiplier)))
   } catch (error) {
     console.log(error.message)
-
     res.status(500).json({ message: 'Ошибка сервера' })
   }
 })
@@ -34,14 +28,14 @@ router.get('/', auth, async (req, res) => {
 router.get('/user', auth, async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id)
-    
-    const userItems = await UserItems.find({ user: userId }).sort({ sortOrder: 1 })
+
+    const userItems = await UserItems.find({ user: userId })
+      .sort({ sortOrder: 1 })
       .populate('item', 'clickPowerBonus description name passiveIncomeBonus sortOrder color')
 
     res.json(userItems)
   } catch (error) {
     console.log(error.message)
-    
     res.status(500).json({ message: 'Ошибка сервера' })
   }
 })
@@ -52,35 +46,27 @@ router.post('/buy/:itemId', auth, async (req, res) => {
     const userId = new mongoose.Types.ObjectId(req.user.id)
     const { itemId } = req.params
 
-    const [item, user, existingUserItem, { prestigeMultiplier } ] = await Promise.all([
+    const [item, user, existingUserItem, { prestigeMultiplier }] = await Promise.all([
       Item.findById(itemId),
       User.findById(userId),
       UserItems.findOne({ user: userId, item: itemId }),
-      computeStats(userId)
+      computeStats(userId),
     ])
 
-    if (!item) {
-      return res.status(404).json({ message: 'Предмет не найден' })
-    }
-    if (!user) {
-      return res.status(404).json({ message: 'Пользователь не найден' })
-    }
+    if (!item) return res.status(404).json({ message: 'Предмет не найден' })
+    if (!user) return res.status(404).json({ message: 'Пользователь не найден' })
+    if (existingUserItem) return res.status(400).json({ message: 'Предмет уже куплен' }
 
-    if (existingUserItem) {
-      return res.status(400).json({ message: 'Предмет уже куплен' })
-    }
+    )
+    const { price: adjustedPrice } = item.applyPrestige(prestigeMultiplier)
 
-    const adjustedPrice = Math.floor(item.price * prestigeMultiplier)
     if (user.coins < adjustedPrice) {
       return res.status(400).json({ message: 'Недостаточно монет' })
     }
 
     user.coins -= adjustedPrice
 
-    const newUserItem = new UserItems({
-      user: userId,
-      item: itemId
-    })
+    const newUserItem = new UserItems({ user: userId, item: itemId })
 
     await Promise.all([user.save(), newUserItem.save()])
 
@@ -98,6 +84,5 @@ router.post('/buy/:itemId', auth, async (req, res) => {
     res.status(500).json({ message: 'Ошибка сервера', error: error.message })
   }
 })
-
 
 module.exports = router

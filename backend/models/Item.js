@@ -39,6 +39,23 @@ const itemSchema = new mongoose.Schema({
   collection: 'items'
 })
 
+/**
+ * Возвращает plain объект предмета с применённым престиж-множителем.
+ * - price умножается
+ *
+ * @param {number} [prestigeMultiplier=1]
+ * @returns {ItemPlain}
+ */
+itemSchema.methods.applyPrestige = function (prestigeMultiplier = 1) {
+  const obj = this.toObject()
+
+  if (prestigeMultiplier === 1) return obj
+
+  obj.price = Math.floor(obj.price * prestigeMultiplier)
+
+  return obj
+}
+
 const Item = mongoose.model('Item', itemSchema)
 
 module.exports = Item
