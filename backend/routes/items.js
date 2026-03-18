@@ -10,13 +10,23 @@ const { computeStats } = require('../services/statsService')
 // Получить все предметы
 router.get('/', auth, async (req, res) => {
   try {
-    const items = await Item.find()
+    const userId = new mongoose.Types.ObjectId(req.user.id)
 
-    res.json(items)
+    const [items, { prestigeMultiplier }] = await Promise.all([
+      Item.find(),
+      computeStats(userId)
+    ])
+
+    const itemsWithPrestige = items.map((item) => ({
+      ...item.toObject(),
+      price: Math.floor(item.price * prestigeMultiplier),
+    }))
+
+    res.json(itemsWithPrestige)
   } catch (error) {
-    console.log('Error: ', error.message)
-    
-    res.status(500).json({ message: 'Ошибка сервера', error: error.message })
+    console.log(error.message)
+
+    res.status(500).json({ message: 'Ошибка сервера' })
   }
 })
 
@@ -26,7 +36,7 @@ router.get('/user', auth, async (req, res) => {
     const userId = new mongoose.Types.ObjectId(req.user.id)
     
     const userItems = await UserItems.find({ user: userId }).sort({ sortOrder: 1 })
-      .populate('item', 'clickPowerBonus description name passiveIncomeBonus price sortOrder color')
+      .populate('item', 'clickPowerBonus description name passiveIncomeBonus sortOrder color')
 
     res.json(userItems)
   } catch (error) {
