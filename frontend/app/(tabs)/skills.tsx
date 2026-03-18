@@ -73,7 +73,6 @@ export default function Skills() {
 
       try {
         await Promise.all([await buySkill(skillId, node.id), refetchUser(), refetchData(), refetchStats()])
-
         hideModal()
       } catch (error) {
         notify('error', getErrorMessage(error))

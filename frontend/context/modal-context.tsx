@@ -13,7 +13,7 @@ interface ModalContextType {
 
 const ModalContext = createContext<ModalContextType>({
   showModal: () => {},
-  hideModal: () => {},
+  hideModal: () => {}
 })
 
 export const useModal = () => useContext(ModalContext)
@@ -32,30 +32,64 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
 
   const animateIn = useCallback(() => {
     Animated.parallel([
-      Animated.timing(backdropOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
-      Animated.spring(cardScale, { toValue: 1, tension: 65, friction: 8, useNativeDriver: true }),
-      Animated.timing(cardOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.timing(backdropOpacity, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.spring(cardScale, {
+        toValue: 1,
+        tension: 65,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(cardOpacity, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
     ]).start()
-  }, [])
+  }, [backdropOpacity, cardScale, cardOpacity])
 
   const animateOut = useCallback((callback?: () => void) => {
     Animated.parallel([
-      Animated.timing(backdropOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-      Animated.timing(cardScale, { toValue: 0.85, duration: 200, useNativeDriver: true }),
-      Animated.timing(cardOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start(callback)
-  }, [])
-
-  const showModal = useCallback((newContent: React.ReactNode, newOptions?: ModalOptions) => {
-    setContent(newContent)
-    setOptions({
-      closeOnBackdrop: true,
-      backdropColor: 'rgba(0, 0, 0, 0.55)',
-      ...newOptions,
+      Animated.timing(backdropOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(cardScale, {
+        toValue: 0.85,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(cardOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) callback?.()
     })
-    setVisible(true)
-    animateIn()
-  }, [animateIn])
+  }, [backdropOpacity, cardScale, cardOpacity])
+
+  const showModal = useCallback(
+    (newContent: React.ReactNode, newOptions?: ModalOptions) => {
+      backdropOpacity.setValue(0)
+      cardScale.setValue(0.85)
+      cardOpacity.setValue(0)
+
+      setContent(newContent)
+      setOptions({
+        closeOnBackdrop: true,
+        backdropColor: 'rgba(0, 0, 0, 0.55)',
+        ...newOptions,
+      })
+
+      setVisible(true)
+    },
+    [backdropOpacity, cardScale, cardOpacity]
+  )
 
   const hideModal = useCallback(() => {
     animateOut(() => {
@@ -74,11 +108,15 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
         animationType="none"
         statusBarTranslucent
         onRequestClose={hideModal}
+        onShow={animateIn}
       >
         <Animated.View
           style={[
             styles.backdrop,
-            { opacity: backdropOpacity, backgroundColor: options.backdropColor, },
+            {
+              opacity: backdropOpacity,
+              backgroundColor: options.backdropColor,
+            },
           ]}
         >
           {options.closeOnBackdrop && (
@@ -104,12 +142,12 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject
+    ...StyleSheet.absoluteFillObject,
   },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32
+    paddingHorizontal: 32,
   }
 })

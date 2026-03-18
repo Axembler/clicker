@@ -24,7 +24,7 @@ export const useAchievementQueue = () => {
 
     showModal(
       createElement(AchievementModal, {
-        achievement: next,
+        userAchievement: next,
         onClose: showNext,
       }),
       { closeOnBackdrop: false }

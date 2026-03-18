@@ -1,24 +1,24 @@
-import { CheckedAchievement } from '@/types/achievements'
+import { Achievement } from '@/types/achievements'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 
 interface AchievementModalProps {
-  achievement: CheckedAchievement
+  userAchievement: Achievement
   onClose: () => void
 }
 
-export function AchievementModal({ achievement, onClose }: AchievementModalProps) {
+export function AchievementModal({ userAchievement, onClose }: AchievementModalProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.badge}>🏆 Новое достижение!</Text>
 
-      {achievement.title && (
-        <Text style={styles.title}>{achievement.title}</Text>
+      {userAchievement.title && (
+        <Text style={styles.title}>{userAchievement.title}</Text>
       )}
 
-      <Text style={styles.description}>{achievement.description}</Text>
+      <Text style={styles.description}>{userAchievement.description}</Text>
 
-      {achievement.reward?.coins > 0 && (
-        <Text style={styles.reward}>+{achievement.reward.coins} монет 🪙</Text>
+      {userAchievement.reward?.coins > 0 && (
+        <Text style={styles.reward}>+{userAchievement.reward.coins} монет 🪙</Text>
       )}
 
       <TouchableOpacity style={styles.button} onPress={onClose}>
@@ -35,11 +35,6 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     paddingHorizontal: 28,
     alignItems: 'center',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 6,
     gap: 8,
   },
   icon: {
@@ -90,5 +85,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
-  },
+  }
 })

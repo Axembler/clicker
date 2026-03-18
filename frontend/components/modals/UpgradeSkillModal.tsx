@@ -37,9 +37,6 @@ export const UpgradeSkillModal = ({ node, skill, level, status, onCancel, onConf
           </Text>
           <Text style={styles.modalBranch}>{skill.label}</Text>
         </View>
-        <TouchableOpacity onPress={onCancel} style={styles.closeBtn}>
-          <Text style={styles.closeBtnText}>✕</Text>
-        </TouchableOpacity>
       </View>
 
       <View style={styles.modalBody}>
@@ -134,19 +131,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#888',
     marginTop: 2,
-  },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#00000015',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeBtnText: {
-    fontSize: 14,
-    color: '#555',
-    fontWeight: '600',
   },
   modalBody: {
     paddingHorizontal: 20,

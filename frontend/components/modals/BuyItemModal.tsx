@@ -77,11 +77,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 28,
     overflow: 'hidden',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 6,
   },
   notEnoughCoinsText: {
     color: '#ef8888',
