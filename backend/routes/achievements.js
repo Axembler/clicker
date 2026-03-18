@@ -11,9 +11,14 @@ const { computeStats } = require('../services/statsService')
 // Получить все достижения
 router.get('/', auth, async (req, res) => {
   try {
-    const achievements = await Achievement.find()
+    const userId = new mongoose.Types.ObjectId(req.user.id)
 
-    res.json(achievements)
+    const [achievements, { prestigeMultiplier }] = await Promise.all([
+      Achievement.find(),
+      computeStats(userId),
+    ])
+
+    res.json(achievements.map((achievement) => achievement.applyPrestige(prestigeMultiplier)))
   } catch (error) {
     console.log('Error: ', error.message)
     
