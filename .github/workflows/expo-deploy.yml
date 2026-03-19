@@ -88,7 +88,9 @@ jobs:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
         run: |
-          eas update --branch production --message "OTA: $COMMIT_MSG"
+          eas update \
+            --branch production \
+            --message "$COMMIT_MSG" \
 
   native-build:
     name: Native Build (Android)
