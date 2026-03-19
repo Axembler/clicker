@@ -31,6 +31,7 @@ Clicker — fullstack pet-project: мобильная clicker-игра для An
 • middleware для защиты приватных маршрутов
 • серверная обработка части игровой логики
 • тесты на Jest
+• логирование на Winston
 
 ▎Технологии
 
@@ -49,6 +50,7 @@ Clicker — fullstack pet-project: мобильная clicker-игра для An
   • JWT
   • bcrypt
   • Jest
+  • Winston
 
 ▎Deploy / Infrastructure
 
@@ -81,10 +83,10 @@ cd Clicker
 
 cd backend
 npm i
-node server
+npm run start
 ```
 
-Переменные окружения для сервера описаны в файле .env.examples внутри папки backend.
+Переменные окружения для сервера описаны в файле .env.example внутри папки backend.
 
 ▎3. Запуск frontend
 
@@ -95,15 +97,15 @@ npm i
 npm run start
 ```
 
-Переменные окружения для клиента описаны в файле .env.examples внутри папки frontend.
+Переменные окружения для клиента описаны в файле .env.example внутри папки frontend.
 
 ▎Переменные окружения
 
 Для клиента и сервера используются разные .env-файлы.
 
 Примеры и описание переменных уже подготовлены в:
-• backend/.env.examples
-• frontend/.env.examples
+• backend/.env.example
+• frontend/.env.example
 
 Перед локальным запуском нужно создать свои .env на основе этих шаблонов.
 

@@ -3,17 +3,18 @@ const User = require('../models/User')
 const Achievement = require('../models/Achievement')
 const { getUserAchievements, grantAchievements, receiveAchievement } = require('../services/achievementsService')
 const { computeStats } = require('../services/statsService')
-const { catchAsync } = require('../config/logger')
+const { catchAsync, logger } = require('../config/logger')
+const { AppError } = require('../middleware/errorHandler')
 
 // GET /achievements
 const getAchievements = catchAsync(async (req, res) => {
   const userId = new mongoose.Types.ObjectId(req.user.id)
-  const [achievements, { prestigeMultiplier }] = await Promise.all([
+  const [achievements, { prestigeMultiplier, globalMultiplier }] = await Promise.all([
     Achievement.find(),
     computeStats(userId),
   ])
 
-  res.json(achievements.map((a) => a.applyPrestige(prestigeMultiplier)))
+  res.json(achievements.map((a) => a.applyModifiers(prestigeMultiplier, globalMultiplier)))
 })
 
 // GET /achievements/user

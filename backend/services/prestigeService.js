@@ -3,6 +3,7 @@ const User = require('../models/User')
 const Achievement = require('../models/Achievement')
 const UserItems = require('../models/UserItems')
 const UserAchievements = require('../models/UserAchievements')
+const { AppError } = require('../middleware/errorHandler')
 
 const applyPrestige = async (userId) => {
   const objectId = new mongoose.Types.ObjectId(userId)

@@ -1,16 +1,18 @@
-const { default: mongoose } = require('mongoose')
 const User = require('../models/User')
 const Item = require('../models/Item')
 const UserItems = require('../models/UserItems')
 const { computeStats } = require('./statsService')
+const { AppError } = require('../middleware/errorHandler')
 
 const getAll = async (userId) => {
-  const [items, { prestigeMultiplier }] = await Promise.all([
-    Item.find(),
-    computeStats(userId),
+  const [items, stats] = await Promise.all([
+    Item.find().sort({ sortOrder: 1 }),
+    computeStats(userId)
   ])
 
-  return items.map((item) => item.applyPrestige(prestigeMultiplier))
+  return items.map((item) =>
+    item.applyModifiers(stats.prestigeMultiplier, stats.upgradeDiscount)
+  )
 }
 
 const getUserItems = async (userId) => {
@@ -20,42 +22,37 @@ const getUserItems = async (userId) => {
 }
 
 const buyItem = async (userId, itemId) => {
-  const [item, user, existingUserItem, { prestigeMultiplier }] = await Promise.all([
+  const [item, user, existingUserItem, stats] = await Promise.all([
     Item.findById(itemId),
     User.findById(userId),
     UserItems.findOne({ user: userId, item: itemId }),
-    computeStats(userId),
+    computeStats(userId)
   ])
 
-  if (!item) {
-    throw new AppError('Предмет не найден', 404, { itemId })
-  }
+  if (!item) throw new AppError('Предмет не найден',  404, { itemId })
+  if (!user) throw new AppError('Пользователь не найден', 404, { userId })
+  if (existingUserItem) throw new AppError('Предмет уже куплен', 400, { itemId })
 
-  if (!user) {
-    throw new AppError('Пользователь не найден', 404, { userId })
-  }
+  const { price: finalPrice } = item.applyModifiers(
+    stats.prestigeMultiplier,
+    stats.upgradeDiscount
+  )
 
-  if (existingUserItem) {
-    throw new AppError('Предмет уже куплен', 400, { existingUserItem })
-  }
-
-  const { price: adjustedPrice } = item.applyPrestige(prestigeMultiplier)
-
-  if (user.coins < adjustedPrice) {
-    throw new AppError('Недостаточно денег', 400, {
-      coins: existingUserItem,
-      price: adjustedPrice
+  if (user.coins < finalPrice) {
+    throw new AppError('Недостаточно монет', 400, {
+      coins: user.coins,
+      price: finalPrice
     })
   }
 
-  user.coins -= adjustedPrice
+  user.coins -= finalPrice
 
   const newUserItem = new UserItems({ user: userId, item: itemId })
 
   await Promise.all([user.save(), newUserItem.save()])
 
   return {
-    message: `Предмет "${item.name}" куплен за ${adjustedPrice}`,
+    message: `Предмет "${item.name}" куплен за ${finalPrice}`,
     userItem: newUserItem,
     coins: user.coins
   }

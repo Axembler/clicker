@@ -107,11 +107,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 28,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 20,
   },
   modalHeader: {
     flexDirection: 'row',

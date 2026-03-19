@@ -40,18 +40,23 @@ const itemSchema = new mongoose.Schema({
 })
 
 /**
- * Возвращает plain объект предмета с применённым престиж-множителем.
- * - price умножается
+ * Возвращает plain объект предмета с применёнными модификаторами цены.
  *
- * @param {number} [prestigeMultiplier=1]
- * @returns {ItemPlain}
+ * Формула: price = floor(basePrice × prestigeMultiplier × (1 − upgradeDiscount))
+ *
+ * @param {number} [prestigeMultiplier=1] — множитель от престижа
+ * @param {number} [upgradeDiscount=0] — скидка [0..1) от скилла discount
+ * @returns {Object}
  */
-itemSchema.methods.applyPrestige = function (prestigeMultiplier = 1) {
+itemSchema.methods.applyModifiers = function (
+  prestigeMultiplier = 1,
+  upgradeDiscount = 0
+) {
   const obj = this.toObject()
 
-  if (prestigeMultiplier === 1) return obj
+  const discountFactor = 1 - Math.min(upgradeDiscount, 0.50) // защита от >50%
 
-  obj.price = Math.floor(obj.price * prestigeMultiplier)
+  obj.price = Math.floor(obj.price * prestigeMultiplier * discountFactor)
 
   return obj
 }

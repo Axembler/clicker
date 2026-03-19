@@ -1,7 +1,8 @@
 const { default: mongoose } = require('mongoose')
 const User = require('../models/User')
-const { validateTimestamps } = require('./clickValidation')
 const { computeStats } = require('./statsService')
+const { validateTimestamps } = require('../validators/timestamps')
+const { AppError } = require('../middleware/errorHandler')
 
 const increment = async (userId, timestamps) => {
   const validationError = validateTimestamps(timestamps)

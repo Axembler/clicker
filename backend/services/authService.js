@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
+const { AppError } = require('../middleware/errorHandler')
 
 const generateToken = (user) => {
   return jwt.sign(

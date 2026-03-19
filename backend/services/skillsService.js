@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const Skill = require('../models/Skill')
 const UserSkills = require('../models/UserSkills')
 const User = require('../models/User')
+const { AppError } = require('../middleware/errorHandler')
 
 const getAllSkills = async () => {
   return Skill.find()

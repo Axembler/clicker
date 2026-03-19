@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    width: 130,
+    width: 140,
     borderWidth: 1,
     borderColor: '#E0D0FF',
   },

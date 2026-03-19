@@ -1,4 +1,5 @@
-const { groupIntoBursts, validateTimestamps, getIntervals, standardDeviation } = require('../services/clickValidation')
+const { getIntervals, standardDeviation } = require("../utils/math")
+const { validateTimestamps, groupIntoBursts } = require("../validators/timestamps")
 
 /**
  * Генерирует массив timestamps с заданным базовым интервалом и опциональным шумом

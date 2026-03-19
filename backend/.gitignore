@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
-
+logs/
+*.log
 # env files
 .env

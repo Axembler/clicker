@@ -1,3 +1,4 @@
+const { AppError } = require('../middleware/errorHandler')
 const User = require('../models/User')
 
 const wakeUp = (user, passiveEarned, passiveSeconds) => {

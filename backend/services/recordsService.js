@@ -1,3 +1,4 @@
+const { AppError } = require('../middleware/errorHandler')
 const User = require('../models/User')
 
 const ALLOWED_SORT_FIELDS = ['totalClicks', 'totalCoins']

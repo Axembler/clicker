@@ -1,3 +1,4 @@
+const { AppError } = require('../middleware/errorHandler')
 const Achievement = require('../models/Achievement')
 const User = require('../models/User')
 const UserAchievements = require('../models/UserAchievements')
@@ -33,7 +34,7 @@ const getUserAchievements = (userId) =>
     'title description condition reward'
   )
 
-const grantAchievements = async (user, prestigeMultiplier) => {
+const grantAchievements = async (user, prestigeMultiplier, globalMultiplier) => {
   const [allAchievements, userAchievements] = await Promise.all([
     Achievement.find(),
     UserAchievements.find({ user: user._id }, { achievement: 1 }).lean(),
@@ -56,7 +57,7 @@ const grantAchievements = async (user, prestigeMultiplier) => {
   if (newlyUnlocked.length === 0) return []
 
   const totalReward = newlyUnlocked.reduce(
-    (sum, a) => sum + Math.floor((a.reward?.coins || 0) * prestigeMultiplier),
+    (sum, a) => sum + Math.floor((a.reward?.coins || 0)),
     0
   )
 
@@ -79,7 +80,7 @@ const grantAchievements = async (user, prestigeMultiplier) => {
 
   await Promise.all(savePromises)
 
-  return newlyUnlocked.map((a) => a.applyPrestige(prestigeMultiplier))
+  return newlyUnlocked.map((a) => a.applyModifiers(prestigeMultiplier, globalMultiplier))
 }
 
 const receiveAchievement = async (userId, achievementId) => {
@@ -89,26 +90,37 @@ const receiveAchievement = async (userId, achievementId) => {
     UserAchievements.findOne({ user: userId, achievement: achievementId }),
   ])
 
-  if (!achievement) {
-    throw new AppError('Достижение не найдено', 404, { achievementId })
-  }
+  if (!achievement) throw new AppError('Достижение не найдено', 404, { achievementId })
+  if (!user) throw new AppError('Пользователь не найден', 404, { userId })
+  if (existing) throw new AppError('Достижение уже получено', 400, { achievementId })
+  const stats = await computeStats(userId)
 
-  if (!user) {
-    throw new AppError('Пользователь не найден', 404, { userId })
-  }
-
-  if (existing) {
-    throw new AppError('Достижение уже получено', 404, { achievementId })
-  }
+  const rewardCoins = Math.floor(
+    (achievement.reward?.coins || 0) * stats.prestigeMultiplier
+  )
 
   const userAchievement = new UserAchievements({
     user: userId,
     achievement: achievementId,
+    unlockedAt: new Date(),
   })
 
-  await userAchievement.save()
+  const savePromises = [userAchievement.save()]
 
-  return { achievement, userAchievement }
+  if (rewardCoins > 0) {
+    user.coins += rewardCoins
+    user.totalCoins += rewardCoins
+    savePromises.push(user.save())
+  }
+
+  await Promise.all(savePromises)
+
+  return {
+    achievement: achievement.applyModifiers(stats.prestigeMultiplier, stats.globalMultiplier),
+    userAchievement,
+    rewardCoins,
+    coins: user.coins
+  }
 }
 
 module.exports = {

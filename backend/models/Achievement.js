@@ -70,21 +70,22 @@ const achievementSchema = new mongoose.Schema(
  * - description пересчитывается для coin-based условий
  *
  * @param {number} [prestigeMultiplier=1]
+ * @param {number} [globalMultiplier=1]
  * @returns {AchievementPlain}
  */
-achievementSchema.methods.applyPrestige = function (prestigeMultiplier = 1) {
+achievementSchema.methods.applyModifiers = function (prestigeMultiplier = 1, globalMultiplier = 1) {
   const obj = this.toObject()
 
-  if (prestigeMultiplier === 1) return obj
+  if (prestigeMultiplier !== 1) {
+    const isCoinBased = PRESTIGE_FIELDS.has(this.condition.field)
 
-  const isCoinBased = PRESTIGE_FIELDS.has(this.condition.field)
+    if (isCoinBased) {
+      obj.condition.value = Math.floor(obj.condition.value * prestigeMultiplier)
+      obj.description = `Накопить ${formatNumber(obj.condition.value)} монет`
+    }
 
-  if (isCoinBased) {
-    obj.condition.value = Math.floor(obj.condition.value * prestigeMultiplier)
-    obj.description = `Накопить ${formatNumber(obj.condition.value)} монет`
+    obj.reward.coins = Math.floor(obj.reward.coins * prestigeMultiplier * globalMultiplier)
   }
-
-  obj.reward.coins = Math.floor(obj.reward.coins * prestigeMultiplier)
 
   return obj
 }

@@ -1,3 +1,5 @@
+const { standardDeviation, getIntervals } = require("../utils/math")
+
 const MAX_TIMESTAMPS          = 250
 const MAX_TIMESTAMP_AGE_MS    = 60_000
 
@@ -12,24 +14,6 @@ const MIN_INTERVAL_STD_DEV_MS = 8
 
 /** Минимум пачек для проверки дисперсии */
 const MIN_BURSTS_FOR_VARIANCE_CHECK = 10
-
-function mean(values) {
-  return values.reduce((sum, v) => sum + v, 0) / values.length
-}
-
-function standardDeviation(values) {
-  const μ = mean(values)
-  const variance = mean(values.map(v => (v - μ) ** 2))
-  return Math.sqrt(variance)
-}
-
-function getIntervals(timestamps) {
-  const intervals = []
-  for (let i = 1; i < timestamps.length; i++) {
-    intervals.push(timestamps[i] - timestamps[i - 1])
-  }
-  return intervals
-}
 
 /**
  * Превращает плоский массив тайпштампов в массив пачек.
@@ -104,9 +88,9 @@ function validateTimestamps(timestamps) {
   }
 
   if (bursts.length >= MIN_BURSTS_FOR_VARIANCE_CHECK) {
-    const burstStarts    = bursts.map(b => b[0])
+    const burstStarts = bursts.map(b => b[0])
     const burstIntervals = getIntervals(burstStarts)
-    const σ              = standardDeviation(burstIntervals)
+    const σ = standardDeviation(burstIntervals)
 
     if (σ < MIN_INTERVAL_STD_DEV_MS) {
       return `Подозрительно равномерные клики (СКО = ${σ.toFixed(2)}ms)`
@@ -116,9 +100,4 @@ function validateTimestamps(timestamps) {
   return null
 }
 
-module.exports = {
-  validateTimestamps,
-  groupIntoBursts,
-  getIntervals,
-  standardDeviation,
-}
+module.exports = { validateTimestamps, groupIntoBursts }
