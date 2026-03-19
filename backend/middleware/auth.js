@@ -4,7 +4,7 @@ const auth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1]
 
   if (!token) {
-    return res.status(401).json({ message: 'Нет токена, доступ запрещен' })
+    return next(new AppError('Токен не найден', 401, { userId }))
   }
 
   try {
@@ -14,7 +14,7 @@ const auth = (req, res, next) => {
 
     next()
   } catch (err) {
-    res.status(401).json({ message: 'Токен недействителен' })
+    next(err)
   }
 }
 

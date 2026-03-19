@@ -2,7 +2,7 @@ import { CounterData, Timestamps } from "@/types/counter"
 import { apiClient } from "@/utils/apiClient"
 
 export const incrementCounter = async (timestamps: Timestamps): Promise<CounterData> => {
-  const response = await apiClient('/counter/increment', {
+  const response = await apiClient('/click', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ timestamps })

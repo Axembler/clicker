@@ -2,7 +2,7 @@ const UserSkills = require('../models/UserSkills')
 const UserItems = require('../models/UserItems')
 const User = require('../models/User')
 const SKILL_EFFECTS = require('../utils/skillEffects')
-const { calcPrestigeMultiplier } = require('./expressions')
+const { calcPrestigeMultiplier } = require('../utils/calcPrestigeMultiplier')
 
 /**
  * @typedef {Object} ComputedStats
@@ -25,7 +25,9 @@ async function computeStats(userId) {
     UserItems.find({ user: userId }).populate('item').lean()
   ])
 
-  if (!user) throw new Error('Пользователь не найден')
+  if (!user) {
+    throw new AppError('Пользователь не найден', 404, { userId })
+  }
 
   const stats = {
     clickPower: 1,

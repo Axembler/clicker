@@ -80,6 +80,7 @@ cd Clicker
 ```Bash
 
 cd backend
+npm i
 node server
 ```
 
@@ -90,7 +91,7 @@ node server
 ```Bash
 
 cd frontend
-npm install
+npm i
 npm run start
 ```
 

@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const auth = require('../middleware/auth')
-const prestigeController = require('../controllers/prestigeController')
+const clickController = require('../controllers/clickController')
 
-router.post('/', auth, prestigeController.prestige)
+router.post('/', auth, clickController.increment)
 
 module.exports = router

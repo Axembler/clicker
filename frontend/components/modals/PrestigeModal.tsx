@@ -23,7 +23,7 @@ export function PrestigeModal({ prestige = 0, onConfirm, onCancel }: PrestigeMod
         <Text style={styles.prestigeCardTitle}>⭐ Престиж</Text>
         <Text style={styles.prestigeCardText}>
           Сбрось достижения и начни путь заново — твой прогресс будет отмечен
-          особым знаком престижа.
+          особым знаком престижа. Умения сохранятся.
         </Text>
       </View>
 

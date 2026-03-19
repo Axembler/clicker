@@ -1,85 +1,8 @@
 const express = require('express')
 const router = express.Router()
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
-const User = require('../models/User')
+const authController = require('../controllers/authController')
 
-// Регистрация
-router.post('/register', async (req, res) => {
-  try {
-    const { username, password } = req.body
-
-    // Проверка, существует ли пользователь
-    const existingUser = await User.findOne({ username })
-
-    if (existingUser) {
-      return res.status(400).json({ message: 'Никнейм уже занят' })
-    }
-
-    // Хеширование пароля
-    const hashedPassword = await bcrypt.hash(password, 10)
-
-    // Создание пользователя
-    const user = await User.create({
-      username,
-      password: hashedPassword,
-    })
-
-    // Создание токена
-    const token = jwt.sign(
-      { id: user._id, username: username },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    )
-
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        username: user.username
-      }
-    })
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
-
-// Авторизация
-router.post('/login', async (req, res) => {
-  try {
-    const { username, password } = req.body
-
-    // Поиск пользователя
-    const user = await User.findOne({ username })
-    
-    if (!user) {
-      return res.status(400).json({ message: 'Неверное имя или пароль' })
-    }
-
-    // Проверка пароля
-    const isMatch = await bcrypt.compare(password, user.password)
-
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Неверное имя или пароль' })
-    }
-
-    // Создание токена
-    const token = jwt.sign(
-      { id: user._id, username: username },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    )
-
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        username: user.username
-      }
-    })
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
+router.post('/register', authController.register)
+router.post('/login', authController.login)
 
 module.exports = router
