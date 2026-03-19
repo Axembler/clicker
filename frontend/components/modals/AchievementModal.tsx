@@ -33,6 +33,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 28,
     overflow: 'hidden',
+    paddingVertical: 28,
+    paddingHorizontal: 28,
+    alignItems: 'center',
+    gap: 8
   },
   icon: {
     width: 80,
