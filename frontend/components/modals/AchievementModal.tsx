@@ -2,23 +2,23 @@ import { Achievement } from '@/types/achievements'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 
 interface AchievementModalProps {
-  userAchievement: Achievement
+  achievement: Achievement
   onClose: () => void
 }
 
-export function AchievementModal({ userAchievement, onClose }: AchievementModalProps) {
+export function AchievementModal({ achievement, onClose }: AchievementModalProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.badge}>🏆 Новое достижение!</Text>
 
-      {userAchievement.title && (
-        <Text style={styles.title}>{userAchievement.title}</Text>
+      {achievement.title && (
+        <Text style={styles.title}>{achievement.title}</Text>
       )}
 
-      <Text style={styles.description}>{userAchievement.description}</Text>
+      <Text style={styles.description}>{achievement.description}</Text>
 
-      {userAchievement.reward?.coins > 0 && (
-        <Text style={styles.reward}>+{userAchievement.reward.coins} монет 🪙</Text>
+      {achievement.reward?.coins > 0 && (
+        <Text style={styles.reward}>+{achievement.reward.coins} монет 🪙</Text>
       )}
 
       <TouchableOpacity style={styles.button} onPress={onClose}>

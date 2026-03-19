@@ -1,12 +1,12 @@
 import { createElement } from 'react'
 import { useCallback, useRef } from 'react'
 import { AchievementModal } from '@/components/modals/AchievementModal'
-import { UserAchievement } from '@/types/achievements'
+import { Achievement } from '@/types/achievements'
 import { useModal } from '@/context/modal-context'
 
 export const useAchievementQueue = () => {
   const { showModal, hideModal } = useModal()
-  const queueRef = useRef<UserAchievement[]>([])
+  const queueRef = useRef<Achievement[]>([])
   const isShowingRef = useRef(false)
 
   const showNext = useCallback(() => {
@@ -24,7 +24,7 @@ export const useAchievementQueue = () => {
 
     showModal(
       createElement(AchievementModal, {
-        userAchievement: next,
+        achievement: next,
         onClose: showNext,
       }),
       { closeOnBackdrop: false }
@@ -32,7 +32,7 @@ export const useAchievementQueue = () => {
   }, [showModal, hideModal])
 
   const enqueue = useCallback(
-    (achievements: UserAchievement[]) => {
+    (achievements: Achievement[]) => {
       queueRef.current.push(...achievements)
 
       if (!isShowingRef.current) {

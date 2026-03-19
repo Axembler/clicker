@@ -29,7 +29,7 @@ export const getUserAchievements = async (): Promise<UserAchievement[]> => {
   return data
 }
 
-export const checkAchievements = async (): Promise<UserAchievement[]> => {
+export const checkAchievements = async (): Promise<Achievement[]> => {
   const response = await apiClient('/achievements/check', {
     method: 'POST',
   })
